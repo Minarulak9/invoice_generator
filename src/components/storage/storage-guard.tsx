@@ -330,11 +330,11 @@ function Choice({
 }) {
   const inner = (
     <>
-      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground transition-transform duration-200 group-hover:scale-105 [&_svg]:size-5">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground transition-transform duration-200 group-hover:scale-105 sm:size-11 [&_svg]:size-5">
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-2 text-[15px] font-semibold">
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] font-semibold">
           {title}
           {badge && (
             <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap text-primary-foreground">
@@ -350,7 +350,7 @@ function Choice({
     </>
   );
   const className =
-    "group flex w-full items-center gap-4 rounded-2xl border border-border bg-surface p-4 text-left transition-[border-color,box-shadow,background-color] duration-150 hover:border-primary/40 hover:bg-primary-soft/30 hover:shadow-md focus-visible:focus-ring";
+    "group flex w-full items-center gap-3.5 rounded-2xl border border-border bg-surface p-3.5 text-left sm:gap-4 sm:p-4 transition-[border-color,box-shadow,background-color] duration-150 hover:border-primary/40 hover:bg-primary-soft/30 hover:shadow-md focus-visible:focus-ring";
   return asLink ? (
     <Link href={asLink} onClick={onClick} className={className}>
       {inner}

@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Page } from "@/components/layout/page";
 import { Skeleton } from "@/components/ui/misc";
@@ -70,14 +70,6 @@ export function SettingsView() {
   const { draft, update, status } = useSettingsDraft();
   const go = (id: SectionId) => router.replace(`/settings?section=${id}`, { scroll: false });
   const current = SECTIONS.find((s) => s.id === active)!;
-  const navRef = useRef<HTMLUListElement>(null);
-
-  // Keep the active tab visible in the horizontally scrolling mobile nav.
-  useEffect(() => {
-    navRef.current
-      ?.querySelector<HTMLElement>("[aria-current=page]")
-      ?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
-  }, [active]);
 
   return (
     <Page
@@ -86,25 +78,23 @@ export function SettingsView() {
       actions={<SaveIndicator status={status} />}
     >
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[230px_minmax(0,1fr)]">
-        <nav
-          aria-label="Settings sections"
-          className="-mx-4 overflow-x-auto px-4 lg:mx-0 lg:overflow-visible lg:px-0"
-        >
-          <ul ref={navRef} className="flex gap-1.5 lg:sticky lg:top-6 lg:flex-col">
+        <nav aria-label="Settings sections">
+          {/* Phones: every section visible as a 2-column grid (a sideways scroller hid half of them). */}
+          <ul className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:sticky lg:top-6 lg:flex lg:flex-col">
             {SECTIONS.map((s) => {
               const Icon = s.icon;
               const on = s.id === active;
               return (
-                <li key={s.id} className="shrink-0">
+                <li key={s.id} className="min-w-0">
                   <button
                     type="button"
                     onClick={() => go(s.id)}
                     aria-current={on ? "page" : undefined}
                     className={cn(
-                      "relative flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors focus-visible:focus-ring",
+                      "relative flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors focus-visible:focus-ring sm:gap-2.5 sm:px-3 sm:text-sm",
                       on
                         ? "text-foreground"
-                        : "text-muted-foreground hover:bg-surface-2/70 hover:text-foreground",
+                        : "text-muted-foreground hover:bg-surface-2/70 hover:text-foreground max-lg:bg-surface-2/50",
                     )}
                   >
                     {on && (
@@ -114,8 +104,8 @@ export function SettingsView() {
                         transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
                       />
                     )}
-                    <Icon className={cn("relative size-4", on && "text-primary")} />
-                    <span className="relative">{s.label}</span>
+                    <Icon className={cn("relative size-4 shrink-0", on && "text-primary")} />
+                    <span className="relative min-w-0 text-left leading-tight">{s.label}</span>
                   </button>
                 </li>
               );

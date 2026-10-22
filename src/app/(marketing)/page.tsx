@@ -6,13 +6,16 @@ import {
   Check,
   CircleCheck,
   FileClock,
+  FileDown,
   FileMinus,
   FileText,
   Globe,
   IndianRupee,
+  InfinityIcon,
   Lock,
   MonitorDown,
   Palette,
+  Percent,
   QrCode,
   Receipt,
   ShieldCheck,
@@ -201,11 +204,18 @@ function Hero() {
             <Link href="/dashboard">Open my invoices</Link>
           </Button>
         </div>
-        <ul className="mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-          {["Unlimited invoices", "Auto CGST, SGST & IGST", "PDF in one click"].map((t) => (
-            <li key={t} className="flex items-center gap-1.5">
-              <Check className="size-4 text-success" />
-              {t}
+        <ul className="mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-2.5">
+          {HERO_PERKS.map((perk) => (
+            <li
+              key={perk.label}
+              className="flex items-center gap-2 rounded-full border border-border bg-surface/70 py-1 pr-3.5 pl-1 text-[13px] font-medium text-foreground shadow-xs backdrop-blur-sm sm:text-sm"
+            >
+              <span
+                className={`flex size-6 shrink-0 items-center justify-center rounded-full [&_svg]:size-3.5 ${TONE_CHIP[perk.tone]}`}
+              >
+                {perk.icon}
+              </span>
+              {perk.label}
             </li>
           ))}
         </ul>
@@ -227,6 +237,13 @@ function stagger(i: number): CSSProperties {
 }
 
 type Tone = "primary" | "success" | "warning" | "info" | "danger";
+
+const HERO_PERKS: { label: string; icon: ReactNode; tone: Tone }[] = [
+  // The two short perks lead so they share a row on phones, with the long one centred below.
+  { label: "Unlimited invoices", icon: <InfinityIcon />, tone: "primary" },
+  { label: "PDF in one click", icon: <FileDown />, tone: "info" },
+  { label: "Auto CGST, SGST & IGST", icon: <Percent />, tone: "success" },
+];
 
 const TONE_CHIP: Record<Tone, string> = {
   primary: "bg-primary-soft text-primary-soft-foreground",

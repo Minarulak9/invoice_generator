@@ -84,7 +84,7 @@ export function DialogHeader({
   className?: string;
 }) {
   return (
-    <div className={cn("flex gap-3.5 px-6 pt-6 pr-12 pb-2", className)}>
+    <div className={cn("flex gap-3.5 pt-5 pr-12 pb-2 pl-5 sm:pt-6 sm:pl-6", className)}>
       {icon && (
         <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary-soft-foreground [&_svg]:size-5">
           {icon}
@@ -108,7 +108,9 @@ export function DialogHeader({
 
 export function DialogBody({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <div className={cn("min-h-0 flex-1 overflow-y-auto px-6 py-4", className)}>{children}</div>
+    <div className={cn("min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6", className)}>
+      {children}
+    </div>
   );
 }
 
@@ -116,7 +118,7 @@ export function DialogFooter({ className, children }: { className?: string; chil
   return (
     <div
       className={cn(
-        "flex flex-col-reverse gap-2 border-t border-border bg-surface-2/60 px-6 py-3.5 sm:flex-row sm:items-center sm:justify-end",
+        "flex flex-col-reverse gap-2 border-t border-border bg-surface-2/60 px-5 py-3.5 sm:flex-row sm:px-6 sm:items-center sm:justify-end",
         className,
       )}
     >
