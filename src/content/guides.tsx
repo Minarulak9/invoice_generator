@@ -28,6 +28,10 @@ export interface Guide {
   answer: string;
   sections: GuideSection[];
   faqs: Faq[];
+  /** Step list for HowTo structured data, on guides that are a procedure. */
+  howTo?: { name: string; text: string }[];
+  /** Slugs to show under "Related guides"; defaults to the first three others. */
+  related?: string[];
 }
 
 const Table = ({ head, rows }: { head: string[]; rows: ReactNode[][] }) => (
@@ -193,9 +197,10 @@ const gstInvoiceFormat: Guide = {
       body: (
         <p>
           Businesses whose aggregate turnover is above the notified threshold must also register B2B
-          invoices on the Invoice Registration Portal (IRP) to get an IRN and a signed QR code.
-          Check the current threshold on the GST portal. Invoice Studio creates regular PDF tax
-          invoices — it does not generate IRNs.
+          invoices on the Invoice Registration Portal (IRP) to get an IRN and a signed QR code. See{" "}
+          <Cta href="/guides/e-invoicing-gst">who needs e-invoicing</Cta> for the current threshold
+          and exemptions. Invoice Studio creates regular PDF tax invoices — it does not generate
+          IRNs.
         </p>
       ),
     },
@@ -608,12 +613,528 @@ const proforma: Guide = {
   ],
 };
 
+/* ------------------------------------------------------------------ */
+
+const howToMake: Guide = {
+  slug: "how-to-make-gst-invoice",
+  shortTitle: "How to make a GST invoice",
+  title: "How to Make a GST Invoice Online: Free, Step by Step",
+  metaTitle: "How to Make a GST Invoice Online — Free Step-by-Step Guide",
+  description:
+    "Make a GST bill in a few minutes: add your business and customer, list items with HSN/SAC codes and GST rates, check the CGST/SGST or IGST split, and download a PDF. Free, no sign-up.",
+  keywords: [
+    "how to make GST invoice",
+    "how to create GST bill",
+    "make GST invoice online",
+    "GST bill maker",
+    "create tax invoice online free",
+  ],
+  answer:
+    "To make a GST invoice: enter your business name, address and GSTIN; add the customer's name, address and GSTIN; list each item with its HSN or SAC code, quantity, price and GST rate; check the tax split — CGST + SGST if you and the customer's place of supply are in the same state, IGST if not; then give it a unique invoice number and date and download it as a PDF. A free GST invoice generator does the calculations and layout for you.",
+  howTo: [
+    {
+      name: "Add your business details",
+      text: "Enter your business name, address, state and GSTIN. These appear in the supplier block of every invoice.",
+    },
+    {
+      name: "Add the customer",
+      text: "Enter the customer's name and address, and their GSTIN if they are registered. The first two digits of the GSTIN give their state.",
+    },
+    {
+      name: "List the items",
+      text: "Add each product or service with its HSN or SAC code, quantity, unit price and GST rate.",
+    },
+    {
+      name: "Check the tax",
+      text: "Same state: CGST + SGST, each half the rate. Different state: IGST at the full rate. Check discounts and the total.",
+    },
+    {
+      name: "Number, date and download",
+      text: "Give the invoice a unique, consecutive number and the date of issue, then download the PDF and send it to the customer.",
+    },
+  ],
+  sections: [
+    {
+      id: "before-you-start",
+      heading: "What you need before you start",
+      body: (
+        <ul>
+          <li>Your GSTIN, registered business name and address.</li>
+          <li>The customer&apos;s name and address — and their GSTIN if they are registered.</li>
+          <li>
+            The HSN code (goods) or SAC code (services) and GST rate for each item. Your CA or the
+            CBIC rate notifications have these.
+          </li>
+          <li>Your bank account or UPI ID, so the customer knows how to pay.</li>
+        </ul>
+      ),
+    },
+    {
+      id: "steps",
+      heading: "Make the invoice in five steps",
+      body: (
+        <>
+          <ol>
+            <li>
+              <b>Add your business details.</b> Name, address, state and GSTIN. In the{" "}
+              <Cta href="/invoice?new=1">free invoice generator</Cta> you enter these once and they
+              are remembered for every invoice.
+            </li>
+            <li>
+              <b>Add the customer.</b> For a registered customer, enter their GSTIN — its first two
+              digits are the state code, which decides the tax. Not sure a GSTIN is typed correctly?
+              Run it through the <Cta href="/gstin-checker">GSTIN checker</Cta>.
+            </li>
+            <li>
+              <b>List the items.</b> For each line: description, HSN/SAC code, quantity, unit, price
+              and GST rate. Add a discount per line or on the whole invoice if needed.
+            </li>
+            <li>
+              <b>Check the tax split.</b> If your state and the place of supply match, the invoice
+              shows CGST + SGST (or UTGST), each half the rate. If they differ, it shows IGST at the
+              full rate. The <Cta href="/gst-calculator">GST calculator</Cta> shows the same split
+              for a single amount.
+            </li>
+            <li>
+              <b>Number, date and download.</b> Use a unique, consecutive number of at most 16
+              characters, such as <code>INV/26-27/001</code>. Download the PDF and send it by email
+              or WhatsApp.
+            </li>
+          </ol>
+        </>
+      ),
+    },
+    {
+      id: "before-sending",
+      heading: "Check these before you send it",
+      body: (
+        <>
+          <ul>
+            <li>The invoice number hasn&apos;t been used before in this financial year.</li>
+            <li>The place of supply is shown for interstate supplies.</li>
+            <li>It says whether tax is payable on reverse charge.</li>
+            <li>It carries your signature or an authorised signatory&apos;s name.</li>
+          </ul>
+          <p>
+            The full list of mandatory fields is in the{" "}
+            <Cta href="/guides/gst-invoice-format">GST invoice format guide</Cta>.
+          </p>
+        </>
+      ),
+    },
+    {
+      id: "not-registered",
+      heading: "Not registered under GST?",
+      body: (
+        <p>
+          Only registered businesses can charge GST or issue a tax invoice. If you are not
+          registered, issue an <Cta href="/invoice?new=1&type=invoice">invoice without GST</Cta>. If
+          you are under the composition scheme or supply only exempt goods or services, issue a{" "}
+          <Cta href="/guides/bill-of-supply">bill of supply</Cta> instead.
+        </p>
+      ),
+    },
+  ],
+  faqs: [
+    {
+      q: "Can I make a GST invoice without a GSTIN?",
+      a: "No. Only a business registered under GST can charge GST and issue a tax invoice. If you are not registered, issue a regular invoice without any GST.",
+    },
+    {
+      q: "Can I make a GST invoice on my phone?",
+      a: "Yes. Invoice Studio works in any mobile browser, needs no app download or sign-up, and saves the invoice as a PDF you can share on WhatsApp or email.",
+    },
+    {
+      q: "Is an invoice made with a free online generator valid?",
+      a: "Yes, as long as it contains the particulars required by Rule 46 of the CGST Rules. The tool you use doesn't matter. Businesses covered by e-invoicing must additionally register B2B invoices on the Invoice Registration Portal to get an IRN.",
+    },
+    {
+      q: "How do I calculate GST on an invoice?",
+      a: "Multiply each line's taxable value by its GST rate. For a same-state sale, split the tax equally into CGST and SGST; for an interstate sale, charge it all as IGST. For ₹10,000 at 18%, that's ₹900 CGST + ₹900 SGST, or ₹1,800 IGST.",
+    },
+  ],
+  related: ["gst-invoice-format", "cgst-sgst-igst", "freelancer-invoice-india"],
+};
+
+/* ------------------------------------------------------------------ */
+
+const freelancer: Guide = {
+  slug: "freelancer-invoice-india",
+  shortTitle: "Freelancer & service invoice",
+  title:
+    "Invoices for Freelancers and Service Providers in India: With GST, Without GST and for Foreign Clients",
+  metaTitle: "Freelancer Invoice Format (India) — With or Without GST, Foreign Clients",
+  description:
+    "Which invoice should a freelancer or consultant in India issue? When you need GST registration, what a service invoice must show, which SAC code to use, and how to bill foreign clients under an LUT.",
+  keywords: [
+    "freelancer invoice India",
+    "invoice format for services",
+    "service invoice format",
+    "consultant invoice format",
+    "freelancer GST invoice",
+    "invoice for foreign client India",
+  ],
+  answer:
+    "It depends on whether you are registered under GST. While your aggregate turnover stays within ₹20 lakh a year (₹10 lakh in special category states), you don't have to register, and you issue a plain invoice with no GST. Once registered, you issue a GST tax invoice with your GSTIN, the SAC code for your service and CGST + SGST or IGST. For clients outside India, issue an export invoice: with a Letter of Undertaking (LUT) you charge no GST, and you can bill in USD or another currency.",
+  sections: [
+    {
+      id: "which-invoice",
+      heading: "Which invoice to issue",
+      body: (
+        <Table
+          head={["Your situation", "Issue", "GST on the invoice"]}
+          rows={[
+            ["Not registered under GST", "Invoice (without GST)", "None"],
+            ["Registered — client in your state", "Tax invoice", "CGST + SGST"],
+            ["Registered — client in another state", "Tax invoice", "IGST"],
+            [
+              "Registered — client outside India",
+              "Export invoice",
+              "None under an LUT (zero-rated), or IGST paid and refunded",
+            ],
+          ]}
+        />
+      ),
+    },
+    {
+      id: "registration",
+      heading: "When freelancers need GST registration",
+      body: (
+        <>
+          <p>
+            Service providers must register once their aggregate turnover in a financial year goes
+            above <b>₹20 lakh</b>, or <b>₹10 lakh</b> in the special category states. These are the
+            limits at the time of review; check the GST portal for current figures. Aggregate
+            turnover counts all your taxable, exempt and export supplies across India.
+          </p>
+          <p>
+            Working for clients in other states doesn&apos;t force you to register while you stay
+            within the limit — small service providers making interstate supplies are exempt from
+            compulsory registration. You can also register voluntarily, for example if business
+            clients ask for a GST invoice so that they can claim input tax credit.
+          </p>
+        </>
+      ),
+    },
+    {
+      id: "what-to-include",
+      heading: "What a service invoice should show",
+      body: (
+        <>
+          <ul>
+            <li>Your name or business name, address, and GSTIN if registered.</li>
+            <li>The client&apos;s name, address, and GSTIN if they are registered.</li>
+            <li>A unique invoice number and the date.</li>
+            <li>
+              A clear description of the work and the period — for example &ldquo;UI design, 1–31
+              October&rdquo; — with hours × rate or a fixed fee.
+            </li>
+            <li>
+              The SAC code of the service. SAC codes start with 99 — for example 998314 for IT
+              design and development services.
+            </li>
+            <li>The GST rate and amount, if registered.</li>
+            <li>Payment terms, due date, and your bank or UPI details.</li>
+          </ul>
+          <p>
+            A registered service provider must issue the tax invoice within 30 days of supplying the
+            service. The <Cta href="/invoice?new=1">invoice generator</Cta> has a <b>Service</b>{" "}
+            template built for hourly and project billing, and can add a UPI QR code for the amount
+            due.
+          </p>
+        </>
+      ),
+    },
+    {
+      id: "foreign-clients",
+      heading: "Billing clients outside India",
+      body: (
+        <>
+          <p>
+            Services to a client abroad are usually an export of services, which is zero-rated. File
+            a Letter of Undertaking (Form GST RFD-11) on the GST portal for each financial year, and
+            you can invoice without charging IGST. The invoice must carry the line &ldquo;Supply
+            meant for export under Letter of Undertaking without payment of integrated tax&rdquo;.
+          </p>
+          <p>
+            For it to count as an export, the payment must generally come in convertible foreign
+            exchange (or in rupees where the RBI permits). You can invoice in USD, EUR or GBP —
+            create an <Cta href="/invoice?new=1&type=export">export invoice</Cta>, or read the{" "}
+            <Cta href="/guides/export-invoice-lut">export invoice under LUT</Cta> guide.
+          </p>
+        </>
+      ),
+    },
+  ],
+  faqs: [
+    {
+      q: "Do freelancers in India need GST registration?",
+      a: "Only once aggregate turnover crosses ₹20 lakh in a financial year (₹10 lakh in special category states), at the time of review. Below that, registration is optional, even if your clients are in other states.",
+    },
+    {
+      q: "Can a freelancer issue an invoice without GST?",
+      a: "Yes. If you are not registered under GST, issue a regular invoice with no GST and no GSTIN. You must not charge GST unless you are registered.",
+    },
+    {
+      q: "Do I charge GST to a foreign client?",
+      a: "Not if the service qualifies as an export and you have filed an LUT — the supply is zero-rated and the invoice carries the LUT declaration instead of IGST. Without an LUT, you pay IGST and claim a refund.",
+    },
+    {
+      q: "Which SAC code should a freelancer use?",
+      a: "The one that matches your service. All SAC codes start with 99; for example, 998314 covers IT design and development services. Check the CBIC SAC list or ask your CA for your exact service.",
+    },
+    {
+      q: "Can I make an invoice in USD?",
+      a: "Yes. Export invoices can be in a foreign currency such as USD, EUR or GBP. Invoice Studio supports multi-currency export invoices with the LUT declaration.",
+    },
+  ],
+  related: ["export-invoice-lut", "how-to-make-gst-invoice", "gst-invoice-format"],
+};
+
+/* ------------------------------------------------------------------ */
+
+const creditDebitNote: Guide = {
+  slug: "credit-note-debit-note",
+  shortTitle: "Credit note & debit note",
+  title: "Credit Note and Debit Note Under GST: When to Issue, Format and Time Limit",
+  metaTitle: "GST Credit Note & Debit Note — Format, Rules and Time Limit",
+  description:
+    "When to issue a credit note or a debit note under GST, what each must contain under Rule 53, how to number them, and the time limit for declaring a credit note in your return.",
+  keywords: [
+    "credit note format GST",
+    "debit note format GST",
+    "credit note under GST",
+    "debit note vs credit note",
+    "section 34 GST",
+  ],
+  answer:
+    "Issue a credit note when the value or tax on an invoice you've already issued must come down — goods returned, a price cut after billing, or tax charged too high. Issue a debit note (also called a supplementary invoice) when it must go up. Both fall under section 34 of the CGST Act and must show the details in Rule 53(1A), including the number and date of the original invoice. Declare a credit note in your return no later than 30 November after the end of the financial year of the original supply, or the date you file the annual return, if earlier.",
+  sections: [
+    {
+      id: "credit-vs-debit",
+      heading: "Credit note vs debit note",
+      body: (
+        <Table
+          head={["", "Credit note", "Debit note"]}
+          rows={[
+            ["Effect", "Reduces the value or tax charged", "Increases the value or tax charged"],
+            [
+              "Typical reasons",
+              "Goods returned, price reduced, tax charged too high, services found deficient",
+              "Value under-billed, price raised after billing, tax charged too low",
+            ],
+            ["Issued by", "The supplier", "The supplier"],
+            ["Supplier's tax", "Goes down", "Goes up"],
+          ]}
+        />
+      ),
+    },
+    {
+      id: "format",
+      heading: "What a credit or debit note must contain",
+      body: (
+        <>
+          <p>Rule 53(1A) of the CGST Rules lists the particulars:</p>
+          <ol>
+            <li>Name, address and GSTIN of the supplier.</li>
+            <li>
+              The nature of the document — &ldquo;Credit note&rdquo; or &ldquo;Debit note&rdquo;.
+            </li>
+            <li>
+              A consecutive serial number of at most 16 characters, unique for the financial year.
+            </li>
+            <li>Date of issue.</li>
+            <li>Name, address and GSTIN/UIN of the recipient, if registered.</li>
+            <li>
+              For an unregistered recipient: name, address and delivery address, with the state name
+              and state code.
+            </li>
+            <li>Serial number and date of the original tax invoice or bill of supply.</li>
+            <li>The taxable value, the tax rate, and the tax credited or debited.</li>
+            <li>Signature or digital signature of the supplier or an authorised representative.</li>
+          </ol>
+          <p>
+            Most businesses run a separate number series, such as <code>CN/26-27/001</code> for
+            credit notes and <code>DN/26-27/001</code> for debit notes.
+          </p>
+        </>
+      ),
+    },
+    {
+      id: "time-limit",
+      heading: "Time limits",
+      body: (
+        <>
+          <p>
+            <b>Credit note:</b> declare it in your return no later than <b>30 November</b> following
+            the end of the financial year in which the original supply was made, or the date you
+            file the annual return for that year, whichever is earlier. After that, you can&apos;t
+            reduce your tax liability with it.
+          </p>
+          <p>
+            <b>Debit note:</b> declare it in the return for the month in which you issue it.
+          </p>
+          <p>
+            If your business is covered by <Cta href="/guides/e-invoicing-gst">e-invoicing</Cta>,
+            credit and debit notes to registered buyers need an IRN too.
+          </p>
+        </>
+      ),
+    },
+    {
+      id: "invoice-studio",
+      heading: "Credit notes in Invoice Studio",
+      body: (
+        <p>
+          Invoice Studio does not create credit or debit notes yet — issue them from your accounting
+          software or with your CA. You can still create the original{" "}
+          <Cta href="/invoice?new=1">GST tax invoice</Cta> here, and its number and date are what
+          the credit note must refer to.
+        </p>
+      ),
+    },
+  ],
+  faqs: [
+    {
+      q: "What is the difference between a credit note and a debit note?",
+      a: "A credit note reduces the value or tax of an invoice already issued — for returns, price cuts or excess tax. A debit note increases it — for price increases or tax charged too low. Both are issued by the supplier under section 34 of the CGST Act.",
+    },
+    {
+      q: "What is the time limit to issue a credit note under GST?",
+      a: "It must be declared in a return no later than 30 November after the end of the financial year of the original supply, or the date of filing the annual return for that year, whichever is earlier.",
+    },
+    {
+      q: "Must a credit note mention the original invoice?",
+      a: "Yes. Rule 53(1A) requires the serial number and date of the corresponding tax invoice or bill of supply.",
+    },
+    {
+      q: "Can a credit note be issued without adjusting GST?",
+      a: "Yes. A commercial or financial credit note — for example for a discount that doesn't meet the conditions for reducing the taxable value — can be issued without changing the GST. Neither side adjusts tax or input tax credit for it.",
+    },
+  ],
+  related: ["gst-invoice-format", "e-invoicing-gst", "how-to-make-gst-invoice"],
+};
+
+/* ------------------------------------------------------------------ */
+
+const EINVOICE_PORTAL = "https://einvoice1.gst.gov.in";
+
+const eInvoicing: Guide = {
+  slug: "e-invoicing-gst",
+  shortTitle: "E-invoicing (IRN)",
+  title: "E-Invoicing Under GST: Who Needs It, the Turnover Limit and How IRN Works",
+  metaTitle: "GST E-Invoicing — Applicability, Turnover Limit and IRN Explained",
+  description:
+    "Who must issue e-invoices under GST, the ₹5 crore turnover limit, which businesses are exempt, how the IRN and QR code work, and the 30-day reporting rule for businesses over ₹10 crore.",
+  keywords: [
+    "e-invoice under GST",
+    "e-invoicing applicability",
+    "e-invoice turnover limit",
+    "IRN GST",
+    "e-invoice limit",
+  ],
+  answer:
+    "E-invoicing means reporting B2B invoices to the government's Invoice Registration Portal (IRP), which returns an Invoice Reference Number (IRN) and a signed QR code for the invoice. At the time of review it applies to businesses whose aggregate turnover exceeded ₹5 crore in any financial year from 2017-18 onwards — for B2B supplies, exports and credit and debit notes, but not for sales to consumers. Businesses with turnover of ₹10 crore or more must report each invoice within 30 days of its date. Some sectors, such as banks, insurers, SEZ units and goods transport agencies, are exempt.",
+  sections: [
+    {
+      id: "who",
+      heading: "Who has to issue e-invoices",
+      body: (
+        <>
+          <p>
+            A business must issue e-invoices if its aggregate turnover crossed{" "}
+            <b>₹5 crore in any financial year since 2017-18</b> — the limit at the time of review.
+            Once you cross it in any year, the requirement stays even if turnover later falls. Check
+            the current limit on the <a href={EINVOICE_PORTAL}>e-invoice portal</a>.
+          </p>
+          <Table
+            head={["Covered", "Not covered"]}
+            rows={[
+              ["Tax invoices to registered businesses (B2B)", "Sales to consumers (B2C)"],
+              ["Exports", "Businesses under the turnover limit"],
+              ["Credit and debit notes to registered buyers", "Exempt sectors (below)"],
+            ]}
+          />
+          <p>
+            Exempt regardless of turnover: SEZ units, insurance companies, banks and financial
+            institutions (including NBFCs), goods transport agencies, passenger transport services,
+            cinema admission tickets, and government departments and local authorities.
+          </p>
+        </>
+      ),
+    },
+    {
+      id: "how-irn-works",
+      heading: "How the IRN and QR code work",
+      body: (
+        <ol>
+          <li>You create the invoice in your billing or accounting software as usual.</li>
+          <li>Its details are uploaded to the Invoice Registration Portal (IRP).</li>
+          <li>
+            The IRP validates it and returns a unique Invoice Reference Number (IRN) and a digitally
+            signed QR code.
+          </li>
+          <li>You print the QR code on the invoice and send it to the buyer.</li>
+          <li>The details flow on to your GSTR-1 and, if needed, to the e-way bill.</li>
+        </ol>
+      ),
+    },
+    {
+      id: "30-day-rule",
+      heading: "The 30-day reporting rule",
+      body: (
+        <p>
+          Since 1 April 2025, businesses with aggregate turnover of <b>₹10 crore or more</b> cannot
+          report an invoice to the IRP more than 30 days after the invoice date — the portal rejects
+          it. An invoice dated 1 April must be reported by 30 April. The rule applies to invoices,
+          credit notes and debit notes.
+        </p>
+      ),
+    },
+    {
+      id: "below-limit",
+      heading: "If you're below the limit",
+      body: (
+        <p>
+          You don&apos;t need an IRN — a regular GST tax invoice with all the{" "}
+          <Cta href="/guides/gst-invoice-format">Rule 46 fields</Cta> is enough. That&apos;s what
+          Invoice Studio creates: a <Cta href="/invoice?new=1">free PDF tax invoice</Cta>. It does
+          not generate IRNs, so once e-invoicing applies to you, use software connected to the IRP.
+        </p>
+      ),
+    },
+  ],
+  faqs: [
+    {
+      q: "Is e-invoicing mandatory for businesses with turnover above ₹5 crore?",
+      a: "Yes, at the time of review: e-invoicing applies if aggregate turnover exceeded ₹5 crore in any financial year from 2017-18 onwards, unless your sector is exempt. Check the e-invoice portal for the current limit.",
+    },
+    {
+      q: "Does e-invoicing apply to B2C sales?",
+      a: "No. E-invoicing covers supplies to registered businesses, exports, and credit and debit notes to registered buyers. Invoices to consumers don't need an IRN.",
+    },
+    {
+      q: "What happens if a covered business issues an invoice without an IRN?",
+      a: "For a business covered by e-invoicing, an invoice issued without following the e-invoicing process is not treated as a valid tax invoice, which can also block the buyer's input tax credit.",
+    },
+    {
+      q: "Do I need e-invoicing if my turnover is below ₹5 crore?",
+      a: "No. Issue regular GST tax invoices. You can make them free with an online GST invoice generator.",
+    },
+  ],
+  related: ["gst-invoice-format", "credit-note-debit-note", "how-to-make-gst-invoice"],
+};
+
 export const GUIDES: Guide[] = [
+  howToMake,
   gstInvoiceFormat,
   cgstSgstIgst,
+  freelancer,
   billOfSupply,
   exportInvoice,
   proforma,
+  creditDebitNote,
+  eInvoicing,
 ];
 
 export function getGuide(slug: string) {

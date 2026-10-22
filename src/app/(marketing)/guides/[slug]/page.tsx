@@ -7,7 +7,7 @@ import { Accordion } from "@/components/marketing/accordion";
 import { JsonLd } from "@/components/marketing/json-ld";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/dates";
-import { articleLd, breadcrumbLd, faqLd, graph } from "@/lib/seo";
+import { articleLd, breadcrumbLd, faqLd, graph, howToLd } from "@/lib/seo";
 import { CONTENT_REVIEWED } from "@/lib/site";
 
 export const dynamicParams = false;
@@ -41,7 +41,9 @@ export default async function GuidePage({ params }: PageProps<"/guides/[slug]">)
   const guide = getGuide(slug);
   if (!guide) notFound();
   const path = `/guides/${guide.slug}`;
-  const related = GUIDES.filter((g) => g.slug !== guide.slug).slice(0, 3);
+  const related = guide.related
+    ? guide.related.map(getGuide).filter((g) => g !== undefined)
+    : GUIDES.filter((g) => g.slug !== guide.slug).slice(0, 3);
 
   return (
     <article className="mx-auto max-w-3xl px-4 pt-8 pb-20 sm:px-6 sm:pt-12">
@@ -54,6 +56,7 @@ export default async function GuidePage({ params }: PageProps<"/guides/[slug]">)
             { name: guide.shortTitle, path },
           ]),
           faqLd(guide.faqs),
+          ...(guide.howTo ? [howToLd({ name: guide.title, steps: guide.howTo })] : []),
         )}
       />
 

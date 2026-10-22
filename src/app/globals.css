@@ -412,6 +412,20 @@
   padding-left: 1.3rem;
   list-style: disc;
 }
+.guide-prose ol {
+  margin: 0.9rem 0;
+  padding-left: 1.5rem;
+  list-style: decimal;
+}
+/* Plain links (e.g. to gst.gov.in); internal links bring their own classes. */
+.guide-prose a:not([class]) {
+  font-weight: 500;
+  color: var(--primary);
+  text-underline-offset: 4px;
+}
+.guide-prose a:not([class]):hover {
+  text-decoration: underline;
+}
 .guide-prose li {
   margin: 0.35rem 0;
 }
