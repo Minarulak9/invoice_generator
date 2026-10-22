@@ -6,7 +6,10 @@ import { Providers } from "./providers";
 import "./globals.css";
 
 const verification: Metadata["verification"] = {
-  google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
+  // Search Console token for invoice.zynitex.com; public by design (it ships in the HTML).
+  google:
+    process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ||
+    "GcE-rwXpxEE2JjHUlA3OC0if3cLcpb4gbYXRzCYrrM4",
   other: process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
     ? { "msvalidate.01": process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION }
     : undefined,
