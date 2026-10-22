@@ -331,15 +331,16 @@ function Facts() {
           <div
             key={f.label}
             style={stagger(i)}
-            className="flex reveal flex-col gap-4 border-border p-5 sm:p-7 lg:[&:not(:last-child)]:border-r [&:nth-child(-n+2)]:border-b lg:[&:nth-child(-n+2)]:border-b-0 [&:nth-child(odd)]:border-r"
+            className="flex reveal flex-col border-border p-5 sm:p-7 lg:[&:not(:last-child)]:border-r [&:nth-child(-n+2)]:border-b lg:[&:nth-child(-n+2)]:border-b-0 [&:nth-child(odd)]:border-r"
           >
-            <IconChip tone={f.tone}>{f.icon}</IconChip>
-            <div className="flex flex-col">
-              <dt className="order-2 mt-1 text-sm leading-6 text-muted-foreground">{f.label}</dt>
-              <dd className="bg-[linear-gradient(135deg,var(--foreground),var(--primary))] bg-clip-text text-4xl font-semibold tracking-[-0.04em] text-transparent sm:text-5xl">
+            {/* A <dl> group may only hold <dt>/<dd>, so the icon lives inside the <dd>. */}
+            <dt className="order-2 mt-1 text-sm leading-6 text-muted-foreground">{f.label}</dt>
+            <dd className="flex flex-col gap-4">
+              <IconChip tone={f.tone}>{f.icon}</IconChip>
+              <span className="bg-[linear-gradient(135deg,var(--foreground),var(--primary))] bg-clip-text text-4xl font-semibold tracking-[-0.04em] text-transparent sm:text-5xl">
                 {f.value}
-              </dd>
-            </div>
+              </span>
+            </dd>
           </div>
         ))}
       </dl>
