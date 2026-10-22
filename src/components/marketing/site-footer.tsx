@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Brand } from "@/components/layout/brand";
 import { GUIDES } from "@/content/guides";
+import { TOOLS } from "@/content/tools";
 
 export function SiteFooter() {
   return (
@@ -18,6 +19,7 @@ export function SiteFooter() {
           <FooterLink href="/invoice?new=1&type=proforma">Make a quotation</FooterLink>
           <FooterLink href="/templates">Invoice templates</FooterLink>
           <FooterLink href="/dashboard">Open the app</FooterLink>
+          <FooterLink href="/privacy">Privacy</FooterLink>
         </FooterCol>
         <FooterCol title="GST guides">
           {GUIDES.map((g) => (
@@ -25,11 +27,14 @@ export function SiteFooter() {
               {g.shortTitle}
             </FooterLink>
           ))}
-        </FooterCol>
-        <FooterCol title="Tools & info">
-          <FooterLink href="/gst-calculator">GST calculator</FooterLink>
           <FooterLink href="/guides">All guides</FooterLink>
-          <FooterLink href="/privacy">Privacy</FooterLink>
+        </FooterCol>
+        <FooterCol title="Free tools">
+          {TOOLS.map((t) => (
+            <FooterLink key={t.path} href={t.path}>
+              {t.name}
+            </FooterLink>
+          ))}
         </FooterCol>
       </div>
       <div className="border-t border-border">

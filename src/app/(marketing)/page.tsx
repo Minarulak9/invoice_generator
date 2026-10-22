@@ -13,6 +13,7 @@ import {
   IndianRupee,
   InfinityIcon,
   Lock,
+  MapPin,
   MonitorDown,
   Palette,
   Percent,
@@ -955,6 +956,30 @@ function Learn() {
       text: "Add or remove GST and see the CGST/SGST/IGST split.",
       href: "/gst-calculator",
       cta: "Calculate",
+    },
+    {
+      icon: <BadgeCheck />,
+      tone: "success",
+      title: "GSTIN checker",
+      text: "Validate a GST number and see its state and PAN.",
+      href: "/gstin-checker",
+      cta: "Check",
+    },
+    {
+      icon: <WholeWord />,
+      tone: "warning",
+      title: "Amount in words",
+      text: "Rupees to words in lakh and crore, ready to copy.",
+      href: "/amount-in-words",
+      cta: "Convert",
+    },
+    {
+      icon: <MapPin />,
+      tone: "info",
+      title: "GST state codes",
+      text: "Every state and UT code, with UTGST territories.",
+      href: "/gst-state-codes",
+      cta: "Look up",
     },
   ];
   return (

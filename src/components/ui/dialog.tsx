@@ -118,7 +118,7 @@ export function DialogFooter({ className, children }: { className?: string; chil
   return (
     <div
       className={cn(
-        "flex flex-col-reverse gap-2 border-t border-border bg-surface-2/60 px-5 py-3.5 sm:flex-row sm:px-6 sm:items-center sm:justify-end",
+        "flex flex-col-reverse gap-2 border-t border-border bg-surface-2/60 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-end sm:px-6",
         className,
       )}
     >

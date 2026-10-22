@@ -1,4 +1,5 @@
 import { GUIDES } from "@/content/guides";
+import { TOOLS } from "@/content/tools";
 import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 
 export const dynamic = "force-static";
@@ -27,7 +28,7 @@ ${SITE_NAME} is a free, browser-based GST invoice generator for Indian freelance
 
 ## Tools
 - [Create a free GST invoice](${absoluteUrl("/invoice?new=1")}): the invoice generator
-- [GST calculator](${absoluteUrl("/gst-calculator")}): add or remove GST with the CGST/SGST/IGST split
+${TOOLS.map((t) => `- [${t.name}](${absoluteUrl(t.path)}): ${t.description}`).join("\n")}
 
 ## Guides
 ${GUIDES.map((g) => `- [${g.title}](${absoluteUrl(`/guides/${g.slug}`)}): ${g.answer}`).join("\n")}

@@ -236,14 +236,8 @@ const cgstSgstIgst: Guide = {
   title: "CGST, SGST and IGST: Which GST to Charge on Your Invoice",
   metaTitle: "CGST vs SGST vs IGST — Which GST to Charge (With Examples)",
   description:
-    "Intrastate or interstate? Learn when to charge CGST + SGST, when to charge IGST, where UTGST applies, and see worked examples and the full list of GST state codes.",
-  keywords: [
-    "CGST SGST IGST",
-    "intrastate vs interstate GST",
-    "UTGST",
-    "GST state code list",
-    "place of supply",
-  ],
+    "Intrastate or interstate? Learn when to charge CGST + SGST, when to charge IGST, where UTGST applies, and see worked examples and how state codes decide the tax.",
+  keywords: ["CGST SGST IGST", "intrastate vs interstate GST", "UTGST", "place of supply"],
   answer:
     "Charge CGST + SGST when the supplier and the place of supply are in the same state — each is half of the GST rate (for 18%: 9% CGST + 9% SGST). Charge IGST at the full rate when the place of supply is in a different state or outside India. In Union Territories without a legislature, UTGST replaces SGST. The total tax is the same either way; only the split changes.",
   sections: [
@@ -339,17 +333,16 @@ const cgstSgstIgst: Guide = {
       body: (
         <>
           <p>
-            The first two digits of a GSTIN are the state code. Show the place of supply with its
-            state name and code on interstate invoices.
+            The first two digits of a GSTIN are the state code — 27 is Maharashtra, 29 is Karnataka,
+            07 is Delhi. Comparing your state code with the place of supply tells you whether to
+            charge CGST + SGST or IGST. Show the place of supply with its state name and code on
+            interstate invoices.
           </p>
-          <Table
-            head={["Code", "State / UT", "Intrastate tax"]}
-            rows={INDIAN_STATES.filter((s) => !s.legacy).map((s) => [
-              s.code,
-              s.name,
-              s.utgst ? "CGST + UTGST" : "CGST + SGST",
-            ])}
-          />
+          <p>
+            See the <Cta href="/gst-state-codes">full list of GST state codes</Cta>, including which
+            Union Territories charge UTGST and the code for exports. To read the state from a
+            customer&apos;s GSTIN, use the <Cta href="/gstin-checker">GSTIN checker</Cta>.
+          </p>
         </>
       ),
     },
