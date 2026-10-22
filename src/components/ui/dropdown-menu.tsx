@@ -39,12 +39,13 @@ export const DropdownMenuItem = forwardRef<
     shortcut?: string;
   }
 >(function DropdownMenuItem(
-  { className, icon, tone = "default", shortcut, children, ...props },
+  { className, icon, tone = "default", shortcut, asChild, children, ...props },
   ref,
 ) {
   return (
     <Menu.Item
       ref={ref}
+      asChild={asChild}
       className={cn(
         "relative flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm outline-none select-none",
         "transition-colors duration-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-40",
@@ -56,9 +57,16 @@ export const DropdownMenuItem = forwardRef<
       )}
       {...props}
     >
-      {icon}
-      <span className="flex-1">{children}</span>
-      {shortcut && <span className="text-xs text-subtle-foreground">{shortcut}</span>}
+      {/* asChild needs exactly one element child for Radix's Slot to merge into. */}
+      {asChild ? (
+        children
+      ) : (
+        <>
+          {icon}
+          <span className="flex-1">{children}</span>
+          {shortcut && <span className="text-xs text-subtle-foreground">{shortcut}</span>}
+        </>
+      )}
     </Menu.Item>
   );
 });
