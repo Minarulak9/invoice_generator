@@ -95,3 +95,30 @@ describe("payment terms on the document", () => {
     ]);
   });
 });
+
+describe("preferred payment method", () => {
+  const vmFor = (seller: Partial<Invoice["seller"]>) => {
+    const base = sampleInvoice(DEFAULT_SETTINGS, design);
+    const invoice: Invoice = {
+      ...base,
+      docType: "tax_invoice",
+      currency: "INR",
+      payment: { ...base.payment, amountReceived: "" },
+      seller: { ...base.seller, ...seller },
+    };
+    return buildViewModel(invoice, computeTotals(invoice), invoice.design.customization, opts);
+  };
+  const bank = { ...DEFAULT_SETTINGS.profile.bank, accountNumber: "50100123456789" };
+
+  it("ranks the methods when both bank and UPI are shown", () => {
+    const vm = vmFor({ bank, upiId: "shop@okhdfcbank", preferredPayment: "upi" });
+    expect(vm.payment?.preferred).toBe("upi");
+    expect(vm.payment?.upiUri).not.toBeNull();
+    expect(vm.payment?.bank.length).toBeGreaterThan(0);
+  });
+
+  it("ignores the preference when only one method exists", () => {
+    const vm = vmFor({ bank, upiId: "", preferredPayment: "upi" });
+    expect(vm.payment?.preferred).toBe("");
+  });
+});

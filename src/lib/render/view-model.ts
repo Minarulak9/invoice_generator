@@ -67,6 +67,8 @@ export interface PaymentView {
   upiId: string;
   upiUri: string | null;
   instructions: string;
+  /** Set only when both bank and UPI are shown: which one goes first, marked "Preferred". */
+  preferred: "" | "upi" | "bank";
 }
 
 export interface TaxSummaryView {
@@ -469,8 +471,11 @@ export function buildViewModel(
       : null;
   const instructions = invoice.paymentInstructions.trim();
   const upiId = show.upiQr && invoice.currency === "INR" ? seller.upiId.trim() : "";
+  const preferred = bank.length && (upiUri || upiId) ? seller.preferredPayment : "";
   const payment: PaymentView | null =
-    bank.length || upiUri || instructions || upiId ? { bank, upiId, upiUri, instructions } : null;
+    bank.length || upiUri || instructions || upiId
+      ? { bank, upiId, upiUri, instructions, preferred }
+      : null;
 
   /* ---------------- Status ---------------- */
   const paymentStatus = meta.hasPayment ? t.paymentStatus : null;

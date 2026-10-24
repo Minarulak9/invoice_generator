@@ -18,6 +18,7 @@ import { StateSelect } from "@/components/forms/pickers";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input, Textarea } from "@/components/ui/input";
+import { Segmented } from "@/components/ui/segmented";
 import { SwitchRow } from "@/components/ui/switch";
 import type { SettingsUpdate } from "./use-settings-draft";
 
@@ -186,6 +187,25 @@ export function PaymentsSection({ draft, update }: SectionProps) {
 
   return (
     <div className="space-y-4">
+      <Card>
+        <CardHeader
+          title="Preferred method"
+          description="When both bank and UPI are on a document, the preferred one is listed first and marked Preferred. Both stay valid."
+        />
+        <CardContent>
+          <Segmented<Seller["preferredPayment"]>
+            fullWidth
+            value={p.preferredPayment}
+            onValueChange={(preferredPayment) => set({ preferredPayment })}
+            options={[
+              { value: "", label: "No preference" },
+              { value: "upi", label: "UPI" },
+              { value: "bank", label: "Bank transfer" },
+            ]}
+          />
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader title="Bank account" description="Printed in the payment details block." />
         <CardContent className="grid gap-4">

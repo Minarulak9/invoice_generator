@@ -126,6 +126,8 @@ export const sellerSchema = z.object({
   bank: bankSchema.prefault({}),
   upiId: text(120),
   upiName: text(120),
+  /** Payment method listed first and marked "Preferred"; both are always shown. */
+  preferredPayment: z.enum(["", "upi", "bank"]).default(""),
 });
 export type Seller = z.infer<typeof sellerSchema>;
 

@@ -486,6 +486,7 @@ export function PaymentSection({ boxed = true }: { boxed?: boolean }) {
   const { vm } = useDoc();
   const p = vm.payment;
   if (!p) return null;
+  if (p.preferred) return <RankedPayment boxed={boxed} />;
   return (
     <div className="doc-section">
       <div
@@ -518,15 +519,99 @@ export function PaymentSection({ boxed = true }: { boxed?: boolean }) {
             </div>
           )}
         </div>
-        {p.upiUri && (
-          <div style={{ textAlign: "center", flexShrink: 0 }}>
-            <QrCodeSvg value={p.upiUri} className="doc-qr" title="UPI payment QR code" />
-            <div style={{ fontSize: "0.78em", fontWeight: 600, marginTop: "0.3em" }}>
-              Scan to pay via UPI
-            </div>
-            <div className="doc-muted" style={{ fontSize: "0.75em" }}>
-              {p.upiId}
-            </div>
+        {p.upiUri && <UpiQr uri={p.upiUri} upiId={p.upiId} />}
+      </div>
+    </div>
+  );
+}
+
+function UpiQr({ uri, upiId }: { uri: string; upiId: string }) {
+  return (
+    <div style={{ textAlign: "center", flexShrink: 0 }}>
+      <QrCodeSvg value={uri} className="doc-qr" title="UPI payment QR code" />
+      <div style={{ fontSize: "0.78em", fontWeight: 600, marginTop: "0.3em" }}>
+        Scan to pay via UPI
+      </div>
+      <div className="doc-muted" style={{ fontSize: "0.75em" }}>
+        {upiId}
+      </div>
+    </div>
+  );
+}
+
+/** Heading for one payment method; the preferred one carries a pill. */
+function MethodLabel({ name, preferred }: { name: string; preferred: boolean }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "0.5em",
+        marginBottom: "0.4em",
+        fontWeight: 650,
+      }}
+    >
+      {name}
+      {preferred && (
+        <span
+          style={{
+            padding: "0.1em 0.6em",
+            borderRadius: "999px",
+            background: "var(--doc-primary-soft)",
+            color: "var(--doc-primary)",
+            fontSize: "0.72em",
+            fontWeight: 700,
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+          }}
+        >
+          Preferred
+        </span>
+      )}
+    </div>
+  );
+}
+
+/** Bank and UPI side by side, the preferred method first. */
+function RankedPayment({ boxed }: { boxed: boolean }) {
+  const { vm } = useDoc();
+  const p = vm.payment!;
+  const bank = (
+    <div key="bank" style={{ flex: 1, minWidth: 0 }} className="doc-break">
+      <MethodLabel name="Bank transfer" preferred={p.preferred === "bank"} />
+      <dl className="doc-kv" style={{ margin: 0 }}>
+        {p.bank.map((b) => (
+          <MetaPair key={b.label} label={b.label} value={b.value} align="left" />
+        ))}
+      </dl>
+    </div>
+  );
+  const upi = (
+    <div
+      key="upi"
+      style={p.upiUri ? { flexShrink: 0 } : { flex: 1, minWidth: 0 }}
+      className="doc-break"
+    >
+      <MethodLabel name="UPI" preferred={p.preferred === "upi"} />
+      {p.upiUri ? (
+        <UpiQr uri={p.upiUri} upiId={p.upiId} />
+      ) : (
+        <dl className="doc-kv" style={{ margin: 0 }}>
+          <MetaPair label="UPI ID" value={p.upiId} align="left" />
+        </dl>
+      )}
+    </div>
+  );
+  return (
+    <div className="doc-section">
+      <div className={boxed ? "doc-box" : undefined}>
+        <SectionTitle>Payment details</SectionTitle>
+        <div style={{ display: "flex", gap: "2em", alignItems: "flex-start" }}>
+          {p.preferred === "upi" ? [upi, bank] : [bank, upi]}
+        </div>
+        {p.instructions && (
+          <div className="doc-pre doc-muted" style={{ marginTop: "0.7em" }}>
+            {p.instructions}
           </div>
         )}
       </div>

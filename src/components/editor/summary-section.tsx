@@ -332,7 +332,6 @@ export function NotesSection() {
     useShallow((s) => ({
       notes: s.invoice!.notes,
       terms: s.invoice!.terms,
-      paymentInstructions: s.invoice!.paymentInstructions,
       footer: s.invoice!.footer,
       declaration: s.invoice!.declaration,
       docType: s.invoice!.docType,
@@ -348,12 +347,7 @@ export function NotesSection() {
       collapsible
       defaultOpen={false}
       summary={
-        [
-          n.notes && "Notes",
-          n.terms && "Terms",
-          n.paymentInstructions && "Payment instructions",
-          n.footer && "Footer",
-        ]
+        [n.notes && "Notes", n.terms && "Terms", n.footer && "Footer"]
           .filter(Boolean)
           .join(" · ") || "Nothing added"
       }
@@ -375,18 +369,6 @@ export function NotesSection() {
             rows={3}
             maxLength={2000}
             placeholder="Payment due within 15 days…"
-          />
-        </Field>
-        <Field
-          label="Payment instructions"
-          optional
-          hint="Shown in the payment block, next to bank and UPI details."
-        >
-          <Textarea
-            value={n.paymentInstructions}
-            onChange={(e) => patch({ paymentInstructions: e.target.value })}
-            rows={2}
-            maxLength={1000}
           />
         </Field>
         {showDeclaration && (
