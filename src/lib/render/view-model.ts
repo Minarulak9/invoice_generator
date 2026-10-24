@@ -1,4 +1,5 @@
 import type { InvoiceTotals, TaxKind } from "@/lib/calc/engine";
+import { computeSchedule } from "@/lib/calc/schedule";
 import { amountInWords } from "@/lib/calc/words";
 import { DOC_TYPE_META, PAYMENT_MODE_LABELS } from "@/lib/documents";
 import { formatDate } from "@/lib/dates";
@@ -74,6 +75,25 @@ export interface TaxSummaryView {
   total: string[];
 }
 
+export interface ScheduleRowView {
+  id: string;
+  index: string;
+  label: string;
+  due: string;
+  share: string;
+  amount: string;
+  status: string;
+}
+
+export interface ScheduleView {
+  rows: ScheduleRowView[];
+  total: string;
+  /** Some stage has a "when" — otherwise that column is left out. */
+  hasDue: boolean;
+  /** Invoices with money received show Paid / Due per instalment. */
+  hasStatus: boolean;
+}
+
 export interface DocViewModel {
   id: string;
   docType: Invoice["docType"];
@@ -99,6 +119,7 @@ export interface DocViewModel {
   amountDueLabel: string;
   words: string;
   taxSummary: TaxSummaryView | null;
+  schedule: ScheduleView | null;
   payment: PaymentView | null;
   paymentStatus: "unpaid" | "partial" | "paid" | null;
   stamp: "PAID" | "PARTIALLY PAID" | null;
@@ -385,6 +406,38 @@ export function buildViewModel(
     };
   }
 
+  /* ---------------- Payment schedule ---------------- */
+  const stages = invoice.paymentSchedule.filter(
+    (s) => s.label.trim() || s.due.trim() || toDec(s.value).greaterThan(0),
+  );
+  let schedule: ScheduleView | null = null;
+  if (stages.length > 0) {
+    const plan = computeSchedule(
+      stages,
+      t.grandTotal,
+      t.precision,
+      meta.hasPayment ? t.amountReceived : "0",
+    );
+    const hasStatus = meta.hasPayment && toDec(t.amountReceived).greaterThan(0);
+    schedule = {
+      rows: stages.map((s, i) => {
+        const p = plan.stages[i];
+        return {
+          id: s.id,
+          index: String(i + 1),
+          label: s.label.trim() || `Instalment ${i + 1}`,
+          due: s.due.trim(),
+          share: formatPercent(p.percent),
+          amount: money(p.amount),
+          status: p.status === "paid" ? "Paid" : p.status === "partial" ? "Part paid" : "Due",
+        };
+      }),
+      total: money(plan.scheduled),
+      hasDue: stages.some((s) => s.due.trim()),
+      hasStatus,
+    };
+  }
+
   /* ---------------- Payment ---------------- */
   const bank: LabelValue[] = [];
   const b = seller.bank;
@@ -482,6 +535,7 @@ export function buildViewModel(
     amountDueLabel: !meta.hasPayment ? "Total" : received ? "Balance due" : "Amount due",
     words: show.amountInWords ? amountInWords(t.grandTotal, invoice.currency) : "",
     taxSummary: show.taxSummary ? taxSummary : null,
+    schedule,
     payment,
     paymentStatus,
     stamp,

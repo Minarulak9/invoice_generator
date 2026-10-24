@@ -1,4 +1,5 @@
 import type { InvoiceTotals } from "@/lib/calc/engine";
+import { computeSchedule } from "@/lib/calc/schedule";
 import { DOC_TYPE_META } from "@/lib/documents";
 import { checkGstin } from "@/lib/gst/gstin";
 import { gstinStateMismatch, resolvePlaceOfSupply, sellerStateCode } from "@/lib/gst/tax";
@@ -46,6 +47,7 @@ export const fieldId = {
   lines: "field-lines",
   invoiceDiscount: "field-invoice-discount",
   amountReceived: "field-amount-received",
+  paymentSchedule: "field-payment-schedule",
   line: (id: string, part: string) => `field-line-${id}-${part}`,
 };
 
@@ -136,6 +138,33 @@ export function validateInvoice(
       err(fieldId.amountReceived, "Enter a valid amount received.");
     else if (received.greaterThan(toDec(totals.grandTotal)))
       err(fieldId.amountReceived, "Amount received is more than the invoice total.");
+  }
+
+  // Payment terms (advance / milestones)
+  const stages = inv.paymentSchedule.filter(
+    (s) => s.label.trim() || s.due.trim() || s.value.trim(),
+  );
+  if (stages.length > 0) {
+    const bad = stages.find(
+      (s) =>
+        !isValidDecimal(s.value, { maxDecimals: s.kind === "percent" ? 2 : dp }) ||
+        (s.kind === "percent" && toDec(s.value).greaterThan(100)),
+    );
+    if (bad)
+      err(
+        fieldId.paymentSchedule,
+        `Payment terms: enter a valid ${bad.kind === "percent" ? "percentage" : "amount"} for ${bad.label.trim() || "each instalment"}.`,
+      );
+    else {
+      const left = toDec(computeSchedule(stages, totals.grandTotal, totals.precision).unscheduled);
+      if (!left.isZero())
+        warn(
+          fieldId.paymentSchedule,
+          left.isNegative()
+            ? "Payment terms add up to more than the total."
+            : "Payment terms don't cover the full total yet.",
+        );
+    }
   }
 
   // ---- Warnings (download is still allowed) ----

@@ -426,6 +426,62 @@ export function TaxSummarySection() {
   );
 }
 
+/** Advance / milestone plan: what is payable, when, and (on invoices) what is already paid. */
+export function ScheduleSection() {
+  const { vm } = useDoc();
+  const s = vm.schedule;
+  if (!s) return null;
+  const left = { textAlign: "left" } as const;
+  return (
+    <div className="doc-section">
+      <SectionTitle>Payment terms</SectionTitle>
+      <table className="doc-subtable">
+        <thead>
+          <tr>
+            <th style={{ width: "2em" }}>#</th>
+            <th style={left}>Milestone</th>
+            {s.hasDue && <th style={left}>When</th>}
+            <th>Share</th>
+            <th>Amount</th>
+            {s.hasStatus && <th>Status</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {s.rows.map((r) => (
+            <tr key={r.id}>
+              <td className="doc-muted doc-num">{r.index}</td>
+              <td style={{ ...left, fontWeight: 550 }} className="doc-break">
+                {r.label}
+              </td>
+              {s.hasDue && (
+                <td style={left} className="doc-muted doc-break">
+                  {r.due}
+                </td>
+              )}
+              <td className="doc-num">{r.share}</td>
+              <td className="doc-num">{r.amount}</td>
+              {s.hasStatus && (
+                <td style={{ fontWeight: 600, color: r.status === "Paid" ? "#15803d" : undefined }}>
+                  {r.status}
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colSpan={s.hasDue ? 4 : 3} style={left}>
+              Total
+            </td>
+            <td className="doc-num">{s.total}</td>
+            {s.hasStatus && <td />}
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  );
+}
+
 export function PaymentSection({ boxed = true }: { boxed?: boolean }) {
   const { vm } = useDoc();
   const p = vm.payment;
@@ -552,6 +608,8 @@ export function sectionHasContent(
   switch (id) {
     case "totals":
       return true;
+    case "schedule":
+      return Boolean(vm.schedule);
     case "taxSummary":
       return Boolean(vm.taxSummary);
     case "payment":

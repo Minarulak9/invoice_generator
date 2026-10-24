@@ -501,12 +501,15 @@ export function DiscountInput({
   symbol,
   onChange,
   label,
+  noun = "discount",
 }: {
   kind: "percent" | "flat";
   value: string;
   symbol: string;
   onChange: (d: { kind: "percent" | "flat"; value: string }) => void;
   label: string;
+  /** What the value is, for the %/amount toggle's label ("Switch to amount discount"). */
+  noun?: string;
 }) {
   return (
     <DecimalInput
@@ -520,7 +523,7 @@ export function DiscountInput({
           type="button"
           onClick={() => onChange({ kind: kind === "percent" ? "flat" : "percent", value })}
           className="flex h-6 min-w-8 items-center justify-center rounded-md bg-surface-3 px-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-primary-soft hover:text-primary-soft-foreground focus-visible:focus-ring"
-          aria-label={`Switch to ${kind === "percent" ? "amount" : "percentage"} discount`}
+          aria-label={`Switch to ${kind === "percent" ? "amount" : "percentage"} ${noun}`}
           title="Switch between % and amount"
         >
           {kind === "percent" ? "%" : symbol}

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { computeTotals } from "@/lib/invoice-calc";
 import { resolveDefaultDesign } from "@/lib/invoice-factory";
 import { sampleInvoice } from "@/lib/sample";
-import { DEFAULT_SETTINGS, type Invoice } from "@/lib/schema";
+import { DEFAULT_SETTINGS, normalizeSectionOrder, type Invoice } from "@/lib/schema";
 import { buildViewModel } from "./view-model";
 
 const opts = { dateFormat: "dd/MM/yyyy", grouping: "indian", upiIncludeAmount: true } as const;
@@ -41,5 +41,57 @@ describe("GST column on the document", () => {
     const vm = viewModel(["0", "18"]);
     expect(hasTaxColumn(vm)).toBe(true);
     expect(vm.rows[0].taxRate).toBe("0%");
+  });
+});
+
+describe("payment terms on the document", () => {
+  const withPlan = (patch: Partial<Invoice>) => {
+    const invoice: Invoice = { ...sampleInvoice(DEFAULT_SETTINGS, design), ...patch };
+    return buildViewModel(invoice, computeTotals(invoice), invoice.design.customization, opts);
+  };
+  const plan: Invoice["paymentSchedule"] = [
+    { id: "a", label: "Advance", due: "On order confirmation", kind: "percent", value: "50" },
+    { id: "b", label: "", due: "", kind: "percent", value: "50" },
+  ];
+
+  it("is left out when no plan is set", () => {
+    expect(withPlan({ paymentSchedule: [] }).schedule).toBeNull();
+  });
+
+  it("lists each instalment with its share, adding up to the total", () => {
+    const base = sampleInvoice(DEFAULT_SETTINGS, design);
+    const vm = withPlan({
+      paymentSchedule: plan,
+      payment: { ...base.payment, amountReceived: "" },
+    });
+    expect(vm.schedule?.rows.map((r) => [r.label, r.share])).toEqual([
+      ["Advance", "50%"],
+      ["Instalment 2", "50%"],
+    ]);
+    expect(vm.schedule?.total).toBe(vm.grandTotal);
+    expect(vm.schedule?.hasStatus).toBe(false);
+  });
+
+  it("shows paid / due per instalment once money is received", () => {
+    const base = sampleInvoice(DEFAULT_SETTINGS, design);
+    const half = computeTotals(base).grandTotal;
+    const vm = withPlan({
+      docType: "tax_invoice",
+      paymentSchedule: plan,
+      payment: { ...base.payment, amountReceived: String(Number(half) / 2) },
+    });
+    expect(vm.schedule?.rows.map((r) => r.status)).toEqual(["Paid", "Due"]);
+  });
+
+  it("slots the section in after totals for designs saved before it existed", () => {
+    expect(normalizeSectionOrder(["signature", "totals", "notes"])).toEqual([
+      "signature",
+      "totals",
+      "schedule",
+      "taxSummary",
+      "payment",
+      "notes",
+      "terms",
+    ]);
   });
 });

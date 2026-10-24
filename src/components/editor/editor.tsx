@@ -49,6 +49,7 @@ import { DocumentSection } from "./document-section";
 import { EditorProvider, useEditorContext } from "./editor-context";
 import { ItemsSection } from "./items-section";
 import { CustomerSection, SellerSection } from "./parties-section";
+import { PaymentTermsSection } from "./payment-terms-section";
 import { PreviewPanel } from "./preview-panel";
 import { SaveStatus } from "./save-status";
 import { revealField } from "./section";
@@ -290,6 +291,7 @@ function ContentForm() {
       <CustomerSection />
       <ItemsSection />
       <SummarySection />
+      <PaymentTermsSection />
       <PaymentSection />
       <NotesSection />
     </>

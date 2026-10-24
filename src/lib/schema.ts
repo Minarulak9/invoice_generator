@@ -47,6 +47,7 @@ export type FontId = (typeof FONT_IDS)[number];
 /** Blocks that follow the line-item table; their order is user-configurable. */
 export const SECTION_IDS = [
   "totals",
+  "schedule",
   "taxSummary",
   "payment",
   "notes",
@@ -233,7 +234,11 @@ export const designSchema = z.object({
 });
 export type DesignCustomization = z.infer<typeof designSchema>;
 
-/** Keep user order, drop unknown/duplicate ids, append any missing ones. */
+/**
+ * Keep user order and drop unknown/duplicate ids. A missing id (one added in a
+ * later version) goes right after its default predecessor, so older saved
+ * orders pick it up where it belongs instead of at the very end.
+ */
 export function normalizeSectionOrder(order: readonly SectionId[]): SectionId[] {
   const seen = new Set<SectionId>();
   const result: SectionId[] = [];
@@ -243,7 +248,11 @@ export function normalizeSectionOrder(order: readonly SectionId[]): SectionId[] 
       result.push(id);
     }
   }
-  for (const id of SECTION_IDS) if (!seen.has(id)) result.push(id);
+  SECTION_IDS.forEach((id, i) => {
+    if (seen.has(id)) return;
+    const after = i === 0 ? -1 : result.indexOf(SECTION_IDS[i - 1]);
+    result.splice(after + 1, 0, id);
+  });
   return result;
 }
 
@@ -277,6 +286,17 @@ export const paymentSchema = z.object({
   note: text(200),
 });
 export type PaymentInfo = z.infer<typeof paymentSchema>;
+
+/** One instalment of a payment plan: an advance, a milestone or the balance. */
+export const paymentStageSchema = z.object({
+  id: z.string().min(1),
+  label: text(80),
+  /** When it falls due, in words ("On order confirmation", "Within 7 days of delivery"). */
+  due: text(120),
+  kind: z.enum(["percent", "flat"]).default("percent"),
+  value: decimalText,
+});
+export type PaymentStage = z.infer<typeof paymentStageSchema>;
 
 /** Small denormalized summary kept on the record so lists don't recalculate. */
 export const invoiceSummarySchema = z.object({
@@ -313,6 +333,8 @@ export const invoiceSchema = z.object({
   supplyType: z.enum(SUPPLY_TYPES).default("auto"),
   roundOff: z.boolean().default(true),
   payment: paymentSchema.prefault({}),
+  /** Optional advance / milestone plan; empty = not used. */
+  paymentSchedule: z.array(paymentStageSchema).max(12).default([]),
   notes: text(2000),
   terms: text(2000),
   paymentInstructions: text(1000),

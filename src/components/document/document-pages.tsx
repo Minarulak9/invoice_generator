@@ -22,6 +22,7 @@ import {
   PageFooter,
   PaymentSection,
   Row,
+  ScheduleSection,
   SignatureSection,
   TableHead,
   TaxSummarySection,
@@ -37,6 +38,7 @@ import type { DocumentTemplate } from "./templates/types";
 
 const SHARED_SECTIONS: Record<SectionId, () => ReactNode> = {
   totals: () => <TotalsSection />,
+  schedule: () => <ScheduleSection />,
   taxSummary: () => <TaxSummarySection />,
   payment: () => <PaymentSection />,
   notes: () => <NotesSection />,

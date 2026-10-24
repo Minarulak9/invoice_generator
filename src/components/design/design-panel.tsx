@@ -55,6 +55,7 @@ import { TemplateGlyph } from "./template-glyph";
 
 const SECTION_LABELS: Record<SectionId, string> = {
   totals: "Totals & amount in words",
+  schedule: "Payment terms (advance / milestones)",
   taxSummary: "Tax summary table",
   payment: "Payment details (bank / UPI)",
   notes: "Notes",
