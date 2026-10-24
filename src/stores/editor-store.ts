@@ -43,7 +43,8 @@ interface EditorState {
   patchCustomer: (partial: Partial<InvoiceCustomer>) => void;
   patchPayment: (partial: Partial<PaymentInfo>) => void;
   patchLine: (id: string, partial: Partial<LineItem>) => void;
-  addLine: (line: LineItem, afterId?: string) => void;
+  /** Inserts after `afterId`; `null` puts the line first, omitted appends it. */
+  addLine: (line: LineItem, afterId?: string | null) => void;
   removeLine: (id: string) => void;
   duplicateLine: (id: string) => void;
   moveLine: (fromId: string, toId: string) => void;
@@ -130,7 +131,7 @@ export const useEditor = create<EditorState>((set, get) => {
       edit((inv) => {
         const index = afterId ? inv.lines.findIndex((l) => l.id === afterId) : -1;
         const lines = [...inv.lines];
-        lines.splice(index === -1 ? lines.length : index + 1, 0, line);
+        lines.splice(afterId === null ? 0 : index === -1 ? lines.length : index + 1, 0, line);
         return { ...inv, lines };
       }),
     removeLine: (id) => edit((inv) => ({ ...inv, lines: inv.lines.filter((l) => l.id !== id) })),

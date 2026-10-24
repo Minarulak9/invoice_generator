@@ -2,9 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getDb } from "@/db/db";
 import { saveCustomer } from "@/db/records";
 import { loadSettings, updateSettings } from "@/db/settings";
-import { createInvoice } from "@/lib/invoice-factory";
+import { createInvoice, resolveDefaultDesign } from "@/lib/invoice-factory";
 import { DEFAULT_SETTINGS, type Invoice } from "@/lib/schema";
-import { rememberParties, rememberTexts } from "./remember";
+import { rememberDesign, rememberParties, rememberTexts } from "./remember";
 
 const memory = new Map<string, string>();
 vi.stubGlobal("localStorage", {
@@ -91,5 +91,21 @@ describe("rememberTexts", () => {
       generated: { number: "INV-2", autoNumber: null },
     });
     expect([next.notes, next.terms, next.footer]).toEqual(["Thanks!", "50% advance", "Zynitex"]);
+  });
+});
+
+describe("rememberDesign", () => {
+  it("makes the document's template and settings the design of the next one", async () => {
+    const inv = invoice();
+    const design = {
+      ...inv.design,
+      templateId: "modern" as const,
+      customization: { ...inv.design.customization, primaryColor: "#18181b" },
+    };
+    await updateSettings((s) => ({ ...s, design: { ...s.design, defaultDesignId: "old" } }));
+    await rememberDesign({ ...inv, design });
+    const next = resolveDefaultDesign(await loadSettings(), []);
+    expect(next.templateId).toBe("modern");
+    expect(next.customization.primaryColor).toBe("#18181b");
   });
 });

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { isNumberTaken, saveInvoice } from "@/db/invoices";
 import { useEditor } from "@/stores/editor-store";
-import { CARRY_OVER_TEXT, rememberTexts } from "./remember";
+import { CARRY_OVER_TEXT, rememberDesign, rememberTexts } from "./remember";
 
 const AUTOSAVE_DELAY = 600;
 
@@ -41,6 +41,12 @@ export function useAutosave() {
     let saveTimer: ReturnType<typeof setTimeout> | undefined;
     let numberTimer: ReturnType<typeof setTimeout> | undefined;
     let textTimer: ReturnType<typeof setTimeout> | undefined;
+    let designTimer: ReturnType<typeof setTimeout> | undefined;
+    const saveDesign = () => {
+      designTimer = undefined;
+      const latest = useEditor.getState().invoice;
+      if (latest) void rememberDesign(latest).catch(() => {});
+    };
     const saveTexts = () => {
       textTimer = undefined;
       const latest = useEditor.getState().invoice;
@@ -57,6 +63,11 @@ export function useAutosave() {
       ) {
         clearTimeout(textTimer);
         textTimer = setTimeout(saveTexts, 1000);
+      }
+      // Likewise a design change becomes the starting design of the next document.
+      if (inv && prev.invoice?.id === inv.id && inv.design !== prev.invoice.design) {
+        clearTimeout(designTimer);
+        designTimer = setTimeout(saveDesign, 800);
       }
       if (state.revision !== prev.revision && state.revision !== state.savedRevision) {
         clearTimeout(saveTimer);
@@ -96,6 +107,10 @@ export function useAutosave() {
       if (textTimer) {
         clearTimeout(textTimer);
         saveTexts();
+      }
+      if (designTimer) {
+        clearTimeout(designTimer);
+        saveDesign();
       }
       window.removeEventListener("beforeunload", beforeUnload);
       document.removeEventListener("visibilitychange", onHide);

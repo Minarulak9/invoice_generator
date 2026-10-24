@@ -24,6 +24,11 @@ export interface SegmentedProps<T extends string> {
   id?: string;
 }
 
+// Radix treats "" as "nothing selected", so an empty option value travels under a stand-in.
+const EMPTY = "__empty__";
+const encode = (v: string) => (v === "" ? EMPTY : v);
+const decode = (v: string) => (v === EMPTY ? "" : v);
+
 /** Segmented control with a sliding selection pill. */
 export function Segmented<T extends string>({
   value,
@@ -40,8 +45,9 @@ export function Segmented<T extends string>({
     <ToggleGroup.Root
       id={id}
       type="single"
-      value={value}
-      onValueChange={(v) => v && onValueChange(v as T)}
+      value={encode(value)}
+      // Radix sends "" when the active item is clicked again; keep the current choice.
+      onValueChange={(v) => v && onValueChange(decode(v) as T)}
       className={cn(
         "relative inline-flex items-center gap-0.5 rounded-[10px] bg-surface-3 p-[3px]",
         fullWidth && "flex w-full",
@@ -54,7 +60,7 @@ export function Segmented<T extends string>({
         return (
           <ToggleGroup.Item
             key={o.value}
-            value={o.value}
+            value={encode(o.value)}
             disabled={o.disabled}
             title={o.title}
             aria-label={o.label ? undefined : o.title}

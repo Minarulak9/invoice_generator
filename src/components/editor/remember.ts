@@ -33,6 +33,17 @@ export async function rememberTexts(invoice: Invoice): Promise<void> {
 }
 
 /**
+ * Make this document's template and design settings the starting design for new
+ * documents. It replaces any saved design marked as default: the last change wins.
+ */
+export async function rememberDesign(invoice: Invoice): Promise<void> {
+  await updateSettings((s) => ({
+    ...s,
+    design: { defaultDesignId: "", fallback: structuredClone(invoice.design) },
+  }));
+}
+
+/**
  * Remember details so nobody types them twice. Runs when a document is
  * downloaded (details are complete by then, unlike mid-typing autosaves):
  * - the seller becomes the business profile if none is saved yet;

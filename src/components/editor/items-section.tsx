@@ -55,7 +55,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Field } from "@/components/ui/field";
@@ -228,10 +227,11 @@ const LineRow = memo(function LineRow({
   const { currency, docType } = useEditor(
     useShallow((s) => ({ currency: s.invoice!.currency, docType: s.invoice!.docType })),
   );
-  const { patchLine, removeLine, duplicateLine, moveLineBy } = useEditor(
+  const { patchLine, removeLine, addLine, duplicateLine, moveLineBy } = useEditor(
     useShallow((s) => ({
       patchLine: s.patchLine,
       removeLine: s.removeLine,
+      addLine: s.addLine,
       duplicateLine: s.duplicateLine,
       moveLineBy: s.moveLineBy,
     })),
@@ -266,6 +266,17 @@ const LineRow = memo(function LineRow({
   const pick = (item: CatalogItem) => {
     const fromCatalog = lineFromCatalog(item, settings);
     set({ ...fromCatalog, id, quantity: line.quantity || "1" });
+  };
+
+  const remove = () => {
+    const lines = useEditor.getState().invoice!.lines;
+    const at = lines.findIndex((l) => l.id === id);
+    const removed = lines[at];
+    const afterId = at > 0 ? lines[at - 1].id : null;
+    removeLine(id);
+    toast(`Removed ${removed.name.trim() || `item ${at + 1}`}`, {
+      action: { label: "Undo", onClick: () => addLine(removed, afterId) },
+    });
   };
 
   const saveToCatalog = async () => {
@@ -394,6 +405,18 @@ const LineRow = memo(function LineRow({
             {formatMoney(amount, currency, settings.formats.numberGrouping)}
           </span>
           <div className="-mr-1 flex shrink-0 items-center">
+            {count > 1 && (
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                className="hover:bg-danger-soft hover:text-danger-foreground"
+                aria-label={`Remove item ${index + 1}`}
+                title="Remove item"
+                onClick={remove}
+              >
+                <Trash />
+              </Button>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -424,15 +447,6 @@ const LineRow = memo(function LineRow({
                   onSelect={() => moveLineBy(id, 1)}
                 >
                   Move down
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  icon={<Trash />}
-                  tone="danger"
-                  disabled={count === 1}
-                  onSelect={() => removeLine(id)}
-                >
-                  Remove
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
