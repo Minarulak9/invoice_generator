@@ -4,7 +4,7 @@ import { FileText, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { DOC_TYPE_META, PROFORMA_TITLES } from "@/lib/documents";
-import { addDaysISO } from "@/lib/dates";
+import { addDaysISO, formatDate } from "@/lib/dates";
 import { DOC_TYPES, type DocType } from "@/lib/schema";
 import { fieldId } from "@/lib/validation";
 import { useEditor } from "@/stores/editor-store";
@@ -18,7 +18,7 @@ import { Select } from "@/components/ui/select";
 import { Tooltip } from "@/components/ui/tooltip";
 import { CurrencySelect } from "@/components/forms/pickers";
 import { useEditorContext, useFieldIssue } from "./editor-context";
-import { EditorSection } from "./section";
+import { AddFieldLink, EditorSection } from "./section";
 import { useEditorActions } from "./use-editor-actions";
 
 export function DocumentSection() {
@@ -41,10 +41,24 @@ export function DocumentSection() {
   const dateIssue = useFieldIssue(fieldId.invoiceDate);
   const dueIssue = useFieldIssue(fieldId.dueDate);
   const meta = DOC_TYPE_META[d.docType];
-  // Rarely needed fields start hidden; they open automatically when filled.
-  const [showRefs, setShowRefs] = useState(false);
-  const refsOpen = showRefs || Boolean(d.referenceNo || d.poNo);
+  // Currency, reference and PO are rarely changed; they open automatically when in use.
+  const [showMore, setShowMore] = useState(false);
+  const moreOpen =
+    showMore || d.docType === "export" || d.currency !== "INR" || Boolean(d.referenceNo || d.poNo);
   const fmt = settings.formats.dateFormat;
+  // Number and dates are filled in automatically, so the section rests as a one-line summary.
+  const summary = [
+    d.docType === "proforma" ? d.docTitle || "Quotation" : meta.label,
+    d.number,
+    d.invoiceDate &&
+      `${formatDate(d.invoiceDate, fmt)}${d.dueDate ? ` → ${formatDate(d.dueDate, fmt)}` : ""}`,
+    d.currency !== "INR" && d.currency,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const hasIssue = Boolean(
+    numberIssue.error || numberIssue.warning || dateIssue.error || dueIssue.error,
+  );
 
   const duePresets = d.invoiceDate
     ? d.docType === "proforma"
@@ -56,37 +70,29 @@ export function DocumentSection() {
     : undefined;
 
   return (
-    <EditorSection title="Document" icon={<FileText />}>
-      <div className="grid gap-4">
-        <Field label="Type">
-          <Select<DocType>
-            value={d.docType}
-            onValueChange={(v) => void changeDocType(v)}
-            options={DOC_TYPES.map((t) => ({
-              value: t,
-              label: DOC_TYPE_META[t].label,
-              description: DOC_TYPE_META[t].description,
-            }))}
-            renderValue={(v) => DOC_TYPE_META[v].label}
-          />
-        </Field>
-
-        {d.docType === "proforma" && (
-          <Field label="Title on document">
-            <Segmented
-              fullWidth
-              value={
-                (PROFORMA_TITLES as readonly string[]).includes(d.docTitle)
-                  ? d.docTitle
-                  : "Quotation"
-              }
-              onValueChange={(v) => patch({ docTitle: v })}
-              options={PROFORMA_TITLES.map((t) => ({ value: t, label: t }))}
+    <EditorSection
+      title="Document"
+      icon={<FileText />}
+      collapsible
+      defaultOpen={d.docType === "export"}
+      hasIssue={hasIssue}
+      fields={[fieldId.number, fieldId.invoiceDate, fieldId.dueDate]}
+      summary={summary}
+    >
+      <div className="grid gap-2.5 sm:gap-3">
+        <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
+          <Field label="Type">
+            <Select<DocType>
+              value={d.docType}
+              onValueChange={(v) => void changeDocType(v)}
+              options={DOC_TYPES.map((t) => ({
+                value: t,
+                label: DOC_TYPE_META[t].label,
+                description: DOC_TYPE_META[t].description,
+              }))}
+              renderValue={(v) => DOC_TYPE_META[v].label}
             />
           </Field>
-        )}
-
-        <div className="grid gap-4 sm:grid-cols-2">
           <Field
             label={`${meta.shortLabel} number`}
             id={fieldId.number}
@@ -113,17 +119,24 @@ export function DocumentSection() {
               }
             />
           </Field>
-          <Field label="Currency">
-            <CurrencySelect
-              value={d.currency}
-              onChange={(c) =>
-                patch({ currency: c, roundOff: c === "INR" ? settings.gst.roundOff : false })
-              }
-            />
-          </Field>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        {d.docType === "proforma" && (
+          <Field label="Title on document">
+            <Segmented
+              fullWidth
+              value={
+                (PROFORMA_TITLES as readonly string[]).includes(d.docTitle)
+                  ? d.docTitle
+                  : "Quotation"
+              }
+              onValueChange={(v) => patch({ docTitle: v })}
+              options={PROFORMA_TITLES.map((t) => ({ value: t, label: t }))}
+            />
+          </Field>
+        )}
+
+        <div className="grid gap-2.5 min-[360px]:grid-cols-2 sm:gap-3">
           <Field label="Date" id={fieldId.invoiceDate} error={dateIssue.error}>
             <DatePicker value={d.invoiceDate} onChange={setInvoiceDate} dateFormat={fmt} />
           </Field>
@@ -135,22 +148,26 @@ export function DocumentSection() {
               clearable
               min={d.invoiceDate}
               presets={duePresets}
-              placeholder="No due date"
+              placeholder="None"
             />
           </Field>
         </div>
 
-        {!refsOpen && (
-          <button
-            type="button"
-            onClick={() => setShowRefs(true)}
-            className="-mt-1 w-fit rounded text-xs font-medium text-primary hover:underline focus-visible:focus-ring"
-          >
-            + Add reference / PO number
-          </button>
+        {!moreOpen && (
+          <div>
+            <AddFieldLink onClick={() => setShowMore(true)}>Currency, reference, PO</AddFieldLink>
+          </div>
         )}
-        <Collapse open={refsOpen}>
-          <div className="grid gap-4 sm:grid-cols-2">
+        <Collapse open={moreOpen}>
+          <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
+            <Field label="Currency" className="sm:col-span-2">
+              <CurrencySelect
+                value={d.currency}
+                onChange={(c) =>
+                  patch({ currency: c, roundOff: c === "INR" ? settings.gst.roundOff : false })
+                }
+              />
+            </Field>
             <Field label={d.docType === "export" ? "Reference / Project" : "Reference"} optional>
               <Input
                 value={d.referenceNo}

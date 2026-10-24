@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { useFieldControl } from "./field";
 
 export const fieldBase = cn(
-  "w-full min-w-0 rounded-lg border border-input bg-surface text-sm text-foreground shadow-xs",
+  "w-full min-w-0 rounded-lg border border-input bg-surface text-[length:var(--field-font)] text-foreground shadow-xs",
   "placeholder:text-subtle-foreground",
   "transition-[border-color,box-shadow,background-color] duration-150",
   "hover:border-border-strong",
@@ -40,7 +40,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       <input
         ref={ref}
         type={type}
-        className={cn(fieldBase, "h-9 px-3", className)}
+        className={cn(fieldBase, "h-[var(--field-h)] px-3", className)}
         {...field}
         {...props}
         id={field.id}
@@ -59,7 +59,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         type={type}
         className={cn(
           fieldBase,
-          "h-9 px-3",
+          "h-[var(--field-h)] px-3",
           leading && "pl-8",
           trailing && "pr-10",
           inputClassName,

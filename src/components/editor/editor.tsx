@@ -46,11 +46,12 @@ import { Segmented } from "@/components/ui/segmented";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { DocumentSection } from "./document-section";
-import { EditorProvider } from "./editor-context";
+import { EditorProvider, useEditorContext } from "./editor-context";
 import { ItemsSection } from "./items-section";
 import { CustomerSection, SellerSection } from "./parties-section";
 import { PreviewPanel } from "./preview-panel";
 import { SaveStatus } from "./save-status";
+import { revealField } from "./section";
 import { AnimatedAmount, NotesSection, PaymentSection, SummarySection } from "./summary-section";
 import { flushSave, useAutosave } from "./use-autosave";
 import { useDownload } from "./use-download";
@@ -190,11 +191,19 @@ function Editor({ settings }: { settings: AppSettings }) {
 
   const jumpToField = useCallback((field: string) => {
     setTab("content");
+    revealField(field);
     // Wait for the content tab (and any collapsed section) to render.
     setTimeout(() => {
       const el = document.getElementById(field);
-      if (!el) return;
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      const form = formRef.current;
+      if (!el || !form) return;
+      // Scroll only the form panel; scrollIntoView would also nudge the locked page.
+      const box = el.getBoundingClientRect();
+      const panel = form.getBoundingClientRect();
+      form.scrollTo({
+        top: form.scrollTop + box.top - panel.top - (panel.height - box.height) / 2,
+        behavior: "smooth",
+      });
       const focusable = el.matches("input,textarea,button,[tabindex]")
         ? el
         : el.querySelector<HTMLElement>("input,textarea,button");
@@ -203,6 +212,18 @@ function Editor({ settings }: { settings: AppSettings }) {
   }, []);
 
   const download = useDownload(settings, jumpToField);
+
+  // The editor is a one-screen app view where the form and the preview scroll on their own.
+  // Lock the page itself, or anything injected below it (browser extensions, dev overlays)
+  // makes the whole page scroll too and a second scrollbar appears beside the preview's.
+  useEffect(() => {
+    const root = document.documentElement;
+    const previous = root.style.overflow;
+    root.style.overflow = "hidden";
+    return () => {
+      root.style.overflow = previous;
+    };
+  }, []);
 
   // Ctrl/Cmd+P runs our download flow instead of printing the app UI.
   useEffect(() => {
@@ -232,14 +253,18 @@ function Editor({ settings }: { settings: AppSettings }) {
           onNavigate={(href) => router.push(href)}
         />
         <div className="flex min-h-0 flex-1">
+          {/*
+            Form takes ~46% of the space beside the 4rem rail (30–54rem), the preview the rest,
+            so the A4 page reaches full size on wide screens without an empty band around it.
+          */}
           <div
             ref={formRef}
             className={cn(
-              "min-h-0 w-full overflow-y-auto overscroll-contain lg:w-[540px] lg:shrink-0 lg:border-r lg:border-border xl:w-[580px]",
+              "min-h-0 w-full overflow-y-auto overscroll-contain lg:w-[clamp(30rem,calc((100vw-4rem)*0.46),54rem)] lg:shrink-0 lg:border-r lg:border-border",
               activeTab === "preview" && "hidden",
             )}
           >
-            <div className="mx-auto max-w-2xl space-y-4 p-4 pb-32 sm:p-6 lg:pb-12">
+            <div className="mx-auto max-w-2xl space-y-3 p-3 pb-32 sm:space-y-4 sm:p-6 lg:max-w-none lg:pb-12">
               <div className="empty:hidden">
                 <StorageBanner />
               </div>
@@ -314,6 +339,9 @@ function Toolbar({
   const number = useEditor((s) => s.invoice!.number);
   const docType = useEditor((s) => s.invoice!.docType);
   const persisted = useEditor((s) => s.persisted);
+  const { settings } = useEditorContext();
+  const total = useEditor((s) => s.totals?.grandTotal ?? "0");
+  const currency = useEditor((s) => s.invoice!.currency);
 
   const tabs = isDesktop
     ? [
@@ -442,10 +470,23 @@ function Toolbar({
           </DropdownMenu>
           {isDesktop && (
             <>
+              {/* Desktop has no total bar like phones do, so the live total sits by the download. */}
+              <div className="mr-1 hidden flex-col items-end leading-tight xl:flex">
+                <span className="text-[11px] font-medium text-muted-foreground">Total</span>
+                <AnimatedAmount
+                  value={formatMoney(total, currency, settings.formats.numberGrouping)}
+                  className="text-[15px] font-semibold"
+                />
+              </div>
               <Tooltip content="Save invoice file (.json) to re-open later">
-                <Button variant="secondary" size="md" onClick={() => void exportFile()}>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onClick={() => void exportFile()}
+                  aria-label="Save invoice file"
+                >
                   <Braces />
-                  Save file
+                  <span className="hidden xl:inline">Save file</span>
                 </Button>
               </Tooltip>
               <Button variant="primary" onClick={onDownload} loading={downloading}>

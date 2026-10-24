@@ -56,11 +56,14 @@ export function DatePicker({
             {...field}
             className={cn(
               fieldBase,
-              "flex h-9 items-center gap-2 px-3 text-left",
+              "flex h-[var(--field-h)] items-center gap-2 px-3 text-left",
+              // Leave room for the clear button so the date never runs under it.
+              clearable && value && "pr-9",
               !value && "text-subtle-foreground",
             )}
           >
-            <CalendarDays className="size-4 shrink-0 text-muted-foreground" />
+            {/* Phones need the width for the date text; the field still reads as a date. */}
+            <CalendarDays className="size-4 shrink-0 text-muted-foreground max-sm:hidden" />
             <span className="flex-1 truncate">
               {value ? formatDate(value, dateFormat) : placeholder}
             </span>
@@ -70,7 +73,7 @@ export function DatePicker({
           <Button
             variant="ghost"
             size="icon-xs"
-            className="absolute top-1 right-1"
+            className="absolute top-1/2 right-1.5 -translate-y-1/2"
             aria-label="Clear date"
             onClick={() => onChange("")}
           >

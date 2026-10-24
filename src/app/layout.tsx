@@ -88,6 +88,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               "window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__bip=e;});",
           }}
         />
+        {/*
+         * iOS Safari zooms into any focused input under 16px. On iOS only, maximum-scale=1
+         * stops that auto-zoom while pinch-zoom keeps working (iOS ignores the limit for
+         * gestures); other browsers keep the plain viewport so zooming is never blocked.
+         */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){var n=navigator;if(!/iP(hone|od|ad)/.test(n.userAgent)&&!(n.platform==='MacIntel'&&n.maxTouchPoints>1))return;function f(){var m=document.querySelector('meta[name=viewport]');if(m&&m.content.indexOf('maximum-scale')<0)m.content+=', maximum-scale=1';}f();document.addEventListener('DOMContentLoaded',f);})();",
+          }}
+        />
       </head>
       <body>
         <Providers>{children}</Providers>

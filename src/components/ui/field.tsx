@@ -60,11 +60,14 @@ export function Field({
         invalid: Boolean(error),
       }}
     >
-      <div className={cn("flex min-w-0 flex-col gap-1.5", className)}>
+      <div className={cn("flex min-w-0 flex-col gap-1 sm:gap-1.5", className)}>
         {(label || action) && (
           <div className="flex min-h-5 items-center justify-between gap-2">
             {label && (
-              <label htmlFor={controlId} className="text-[13px] font-medium text-foreground">
+              <label
+                htmlFor={controlId}
+                className="text-xs font-medium text-foreground sm:text-[13px]"
+              >
                 {label}
                 {required && <span className="ml-0.5 text-danger">*</span>}
                 {optional && (

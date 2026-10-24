@@ -7,6 +7,20 @@
 /* Design tokens — a calm neutral base with a single indigo accent.     */
 /* ------------------------------------------------------------------ */
 
+/*
+ * Form control sizing: 14px text everywhere (the root layout stops iOS Safari from
+ * zooming in on focus); phones get slightly taller 38px controls for easier tapping.
+ */
+:root {
+  --field-h: 2.25rem;
+  --field-font: 0.875rem;
+}
+@media (max-width: 639.98px) {
+  :root {
+    --field-h: 2.375rem;
+  }
+}
+
 :root {
   --radius: 0.625rem;
 

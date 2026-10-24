@@ -65,7 +65,7 @@ export function Select<T extends string>({
         className={cn(
           fieldBase,
           "group flex items-center justify-between gap-2 text-left data-[placeholder]:text-subtle-foreground",
-          size === "md" ? "h-9 px-3" : "h-8 px-2.5 text-[13px]",
+          size === "md" ? "h-[var(--field-h)] px-3" : "h-8 px-2.5 text-[13px]",
           className,
         )}
       >

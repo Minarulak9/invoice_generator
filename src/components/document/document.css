@@ -303,6 +303,8 @@
   display: block;
   object-fit: contain;
   object-position: left center;
+  /* Softens square logos with a solid background; transparent logos are unaffected. */
+  border-radius: 0.5em;
 }
 .doc-logo[data-size="sm"] {
   max-height: 2.6em;

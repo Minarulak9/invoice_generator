@@ -39,6 +39,7 @@ import { saveItem } from "@/db/records";
 import { COMMON_UNITS, DOC_TYPE_META } from "@/lib/documents";
 import { currencyPrecision, currencySymbol } from "@/lib/currency";
 import { formatMoney } from "@/lib/format";
+import { toDec } from "@/lib/money";
 import { sanitizeHsnSac } from "@/lib/gst/tax";
 import { lineFromCatalog, newLineItem } from "@/lib/invoice-factory";
 import type { CatalogItem, LineItem } from "@/lib/schema";
@@ -61,7 +62,7 @@ import { Field } from "@/components/ui/field";
 import { Input, Textarea } from "@/components/ui/input";
 import { GstRateSelect } from "@/components/forms/pickers";
 import { useEditorContext, useFieldIssue } from "./editor-context";
-import { EditorSection } from "./section";
+import { EditorSection, useRevealOn } from "./section";
 
 export function ItemsSection() {
   const { settings } = useEditorContext();
@@ -70,6 +71,9 @@ export function ItemsSection() {
   const addLine = useEditor((s) => s.addLine);
   const catalog = useItems() ?? [];
   const linesIssue = useFieldIssue(fieldId.lines);
+  const done = useEditor((s) =>
+    s.invoice!.lines.some((l) => l.name.trim() && toDec(l.unitPrice).greaterThan(0)),
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -90,6 +94,7 @@ export function ItemsSection() {
     <EditorSection
       title="Items"
       icon={<Package />}
+      done={done}
       id={fieldId.lines}
       action={
         <span className="text-xs text-muted-foreground tabular-nums">
@@ -238,6 +243,7 @@ const LineRow = memo(function LineRow({
   const qtyIssue = useFieldIssue(fieldId.line(id, "quantity"));
   const priceIssue = useFieldIssue(fieldId.line(id, "price"));
   const discIssue = useFieldIssue(fieldId.line(id, "discount"));
+  useRevealOn([fieldId.line(id, "discount")], () => setShowMore(true));
   if (!line) return null;
 
   const hasTax = DOC_TYPE_META[docType].hasTax;
@@ -285,143 +291,153 @@ const LineRow = memo(function LineRow({
   return (
     <div
       className={cn(
-        "rounded-xl border bg-surface transition-[border-color,box-shadow] duration-150",
+        "@container rounded-xl border bg-surface transition-[border-color,box-shadow] duration-150",
         dragging ? "border-primary/50 shadow-lg" : "border-border hover:border-border-strong",
         rowError && "border-danger/50",
       )}
     >
-      <div className="flex items-center gap-1.5 border-b border-border/70 px-2 py-1.5">
-        {handle}
-        <span className="text-xs font-medium text-muted-foreground tabular-nums">
-          Item {index + 1}
-        </span>
-        <div className="ml-auto flex items-center gap-1">
-          <span className="mr-1 text-[13px] font-semibold tabular-nums">
-            {formatMoney(amount, currency, settings.formats.numberGrouping)}
-          </span>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                aria-label={`More actions for item ${index + 1}`}
-              >
-                <Ellipsis />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem icon={<Copy />} onSelect={() => duplicateLine(id)}>
-                Duplicate
-              </DropdownMenuItem>
-              <DropdownMenuItem icon={<BookmarkPlus />} onSelect={() => void saveToCatalog()}>
-                Save to catalog
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                icon={<ArrowUp />}
-                disabled={index === 0}
-                onSelect={() => moveLineBy(id, -1)}
-              >
-                Move up
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                icon={<ArrowDown />}
-                disabled={index === count - 1}
-                onSelect={() => moveLineBy(id, 1)}
-              >
-                Move down
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                icon={<Trash />}
-                tone="danger"
-                disabled={count === 1}
-                onSelect={() => removeLine(id)}
-              >
-                Remove
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-
-      <div className="grid gap-3 p-3">
-        <Field id={fieldId.line(id, "name")} error={nameIssue.error}>
-          <AutocompleteInput<CatalogItem>
-            value={line.name}
-            onChange={(v) => set({ name: v })}
-            suggestions={catalog}
-            getKey={(i) => i.id}
-            getLabel={(i) => i.name}
-            getDescription={(i) =>
-              [
-                i.hsnSac && `HSN ${i.hsnSac}`,
-                i.price && formatMoney(i.price, currency, settings.formats.numberGrouping),
-                i.gstRate && `GST ${i.gstRate}%`,
-              ]
-                .filter(Boolean)
-                .join(" · ")
-            }
-            onPick={pick}
-            placeholder="Item or service name"
-            aria-label={`Item ${index + 1} name`}
-          />
-        </Field>
-
-        {/* Essentials stay visible; the rest is one tap away (progressive disclosure). */}
-        <div className={cn("grid gap-3", hasTax ? "grid-cols-3" : "grid-cols-2")}>
-          <Field label="Qty" id={fieldId.line(id, "quantity")} error={qtyIssue.error}>
-            <DecimalInput
-              value={line.quantity}
-              onValueChange={(v) => set({ quantity: v })}
-              maxDecimals={3}
-              placeholder="1"
-            />
-          </Field>
-          <Field label="Rate" id={fieldId.line(id, "price")} error={priceIssue.error}>
-            <DecimalInput
-              value={line.unitPrice}
-              onValueChange={(v) => set({ unitPrice: v })}
-              maxDecimals={Math.max(dp, 2)}
-              leading={<span className="text-[13px]">{symbol}</span>}
-              placeholder="0.00"
-            />
-          </Field>
-          {hasTax && (
-            <Field label="GST">
-              <GstRateSelect
-                value={line.gstRate}
-                onChange={(r) => set({ gstRate: r })}
-                rates={settings.gst.rates}
-                aria-label={`Item ${index + 1} GST rate`}
+      {/*
+        Narrow: name, then qty / rate / GST below it. Wide form (container ≥ 38rem): all on one
+        line. Details, amount and actions always close the card.
+      */}
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-2.5 p-2.5 sm:p-3">
+        <div className="flex flex-col gap-2.5 @[38rem]:flex-row @[38rem]:items-end">
+          <div className="flex min-w-0 items-start gap-1 @[38rem]:flex-1">
+            <div className="-ml-1 flex h-[var(--field-h)] shrink-0 items-center">{handle}</div>
+            <Field id={fieldId.line(id, "name")} error={nameIssue.error} className="flex-1">
+              <AutocompleteInput<CatalogItem>
+                value={line.name}
+                onChange={(v) => set({ name: v })}
+                suggestions={catalog}
+                getKey={(i) => i.id}
+                getLabel={(i) => i.name}
+                getDescription={(i) =>
+                  [
+                    i.hsnSac && `HSN ${i.hsnSac}`,
+                    i.price && formatMoney(i.price, currency, settings.formats.numberGrouping),
+                    i.gstRate && `GST ${i.gstRate}%`,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")
+                }
+                onPick={pick}
+                placeholder="Item or service name"
+                aria-label={`Item ${index + 1} name`}
               />
             </Field>
-          )}
+          </div>
+
+          {/* Essentials stay visible; the rest is one tap away (progressive disclosure). */}
+          <div
+            className={cn(
+              "grid gap-2.5 @[38rem]:shrink-0",
+              hasTax ? "@[38rem]:w-[21rem]" : "@[38rem]:w-56",
+              hasTax
+                ? "grid-cols-[minmax(0,0.8fr)_minmax(0,1.3fr)_minmax(0,1fr)]"
+                : "grid-cols-[minmax(0,0.8fr)_minmax(0,1.3fr)]",
+            )}
+          >
+            <Field label="Qty" id={fieldId.line(id, "quantity")} error={qtyIssue.error}>
+              <DecimalInput
+                value={line.quantity}
+                onValueChange={(v) => set({ quantity: v })}
+                maxDecimals={3}
+                placeholder="1"
+              />
+            </Field>
+            <Field label="Rate" id={fieldId.line(id, "price")} error={priceIssue.error}>
+              <DecimalInput
+                value={line.unitPrice}
+                onValueChange={(v) => set({ unitPrice: v })}
+                maxDecimals={Math.max(dp, 2)}
+                leading={<span className="text-[13px]">{symbol}</span>}
+                placeholder="0.00"
+              />
+            </Field>
+            {hasTax && (
+              <Field label="GST">
+                <GstRateSelect
+                  value={line.gstRate}
+                  onChange={(r) => set({ gstRate: r })}
+                  rates={settings.gst.rates}
+                  aria-label={`Item ${index + 1} GST rate`}
+                />
+              </Field>
+            )}
+          </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setShowMore((v) => !v)}
-          aria-expanded={moreOpen}
-          className="-mx-1 flex min-w-0 items-center gap-2 rounded-lg px-1 py-0.5 text-left text-xs font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:focus-ring"
-        >
-          <ChevronDown
-            className={cn(
-              "size-3.5 shrink-0 transition-transform duration-200",
-              moreOpen && "rotate-180",
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowMore((v) => !v)}
+            aria-expanded={moreOpen}
+            className="-mx-1 flex min-w-0 flex-1 items-center gap-1.5 rounded-lg px-1 py-0.5 text-left text-xs font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:focus-ring"
+          >
+            <ChevronDown
+              className={cn(
+                "size-3.5 shrink-0 transition-transform duration-200",
+                moreOpen && "rotate-180",
+              )}
+            />
+            <span className="shrink-0">{moreOpen ? "Less" : "Details"}</span>
+            {!moreOpen && (
+              <span className="truncate font-normal text-subtle-foreground">
+                ·{" "}
+                {extras.length > 0
+                  ? extras.join(" · ")
+                  : `description, unit, discount${hasTax ? ", HSN/SAC" : ""}`}
+              </span>
             )}
-          />
-          <span className="shrink-0">{moreOpen ? "Fewer details" : "More details"}</span>
-          {!moreOpen && extras.length > 0 && (
-            <span className="truncate font-normal text-subtle-foreground">
-              · {extras.join(" · ")}
-            </span>
-          )}
-          {!moreOpen && extras.length === 0 && (
-            <span className="truncate font-normal text-subtle-foreground">
-              description, unit, discount{hasTax ? ", HSN/SAC" : ""}
-            </span>
-          )}
-        </button>
+          </button>
+          <span className="shrink-0 text-sm font-semibold tabular-nums">
+            {formatMoney(amount, currency, settings.formats.numberGrouping)}
+          </span>
+          <div className="-mr-1 flex shrink-0 items-center">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label={`More actions for item ${index + 1}`}
+                >
+                  <Ellipsis />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem icon={<Copy />} onSelect={() => duplicateLine(id)}>
+                  Duplicate
+                </DropdownMenuItem>
+                <DropdownMenuItem icon={<BookmarkPlus />} onSelect={() => void saveToCatalog()}>
+                  Save to catalog
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  icon={<ArrowUp />}
+                  disabled={index === 0}
+                  onSelect={() => moveLineBy(id, -1)}
+                >
+                  Move up
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  icon={<ArrowDown />}
+                  disabled={index === count - 1}
+                  onSelect={() => moveLineBy(id, 1)}
+                >
+                  Move down
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  icon={<Trash />}
+                  tone="danger"
+                  disabled={count === 1}
+                  onSelect={() => removeLine(id)}
+                >
+                  Remove
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
 
         <Collapse open={moreOpen}>
           <div className="grid gap-3">

@@ -105,7 +105,7 @@ export function CommandPalette() {
               <Command.Input
                 autoFocus
                 placeholder="Search actions, pages, documents…"
-                className="h-14 w-full bg-transparent text-[15px] outline-none placeholder:text-subtle-foreground"
+                className="h-14 w-full bg-transparent text-sm outline-none placeholder:text-subtle-foreground sm:text-[15px]"
               />
               <Kbd>Esc</Kbd>
             </div>

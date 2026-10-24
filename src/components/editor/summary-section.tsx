@@ -128,13 +128,13 @@ export function SummarySection() {
         aria-expanded={advanced}
         className="mt-4 flex w-full items-center justify-between rounded-lg px-1 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:focus-ring"
       >
-        Advanced options
+        Discount, tax & rounding
         <ChevronDown
           className={cn("size-4 transition-transform duration-200", advanced && "rotate-180")}
         />
       </button>
       <Collapse open={advanced}>
-        <div className="mt-2 grid gap-4 rounded-xl border border-border bg-surface-2/40 p-4">
+        <div className="mt-2 grid gap-3 rounded-xl border border-border bg-surface-2/40 p-3 sm:p-4">
           <Field
             label="Invoice discount"
             optional
@@ -262,8 +262,8 @@ export function PaymentSection() {
         </Badge>
       }
     >
-      <div className="grid gap-4">
-        <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-2.5 sm:gap-3">
+        <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
           <Field label="Amount received" id={fieldId.amountReceived} error={issue.error}>
             <DecimalInput
               value={payment.amountReceived}
@@ -283,7 +283,7 @@ export function PaymentSection() {
             />
           </Field>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
           <Field label="Mode" optional>
             <Select<PaymentMode>
               value={payment.mode}
@@ -358,7 +358,7 @@ export function NotesSection() {
           .join(" · ") || "Nothing added"
       }
     >
-      <div className="grid gap-4">
+      <div className="grid gap-2.5 sm:gap-3">
         <Field label="Notes" optional>
           <Textarea
             value={n.notes}

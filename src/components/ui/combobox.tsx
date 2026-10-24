@@ -61,7 +61,7 @@ export function Combobox<T>({
             {...field}
             className={cn(
               fieldBase,
-              "flex h-9 items-center justify-between gap-2 px-3 text-left",
+              "flex h-[var(--field-h)] items-center justify-between gap-2 px-3 text-left",
               className,
             )}
           >
@@ -81,7 +81,7 @@ export function Combobox<T>({
             <Search className="size-4 shrink-0 text-muted-foreground" />
             <Command.Input
               placeholder={searchPlaceholder}
-              className="h-11 w-full bg-transparent text-sm outline-none placeholder:text-subtle-foreground"
+              className="h-11 w-full bg-transparent text-[length:var(--field-font)] outline-none placeholder:text-subtle-foreground"
             />
           </div>
           <Command.List className="min-h-0 flex-1 overflow-y-auto p-1">
