@@ -206,6 +206,8 @@ export function buildViewModel(
   const anyDiscount = visibleLines.some((l) =>
     toDec(lineTotals.get(l.id)?.lineDiscount).greaterThan(0),
   );
+  // A column (and summary) of "0% ₹0.00" on every line is noise — hide them until some line is taxed.
+  const anyTaxed = visibleLines.some((l) => !toDec(lineTotals.get(l.id)?.rate).isZero());
 
   const rows: DocRow[] = visibleLines.map((l, i) => {
     const t = lineTotals.get(l.id);
@@ -250,7 +252,7 @@ export function buildViewModel(
   columns.push({ key: "price", label: "Rate", align: "right", track: "7em" });
   if (show.discountColumn && anyDiscount)
     columns.push({ key: "discount", label: "Disc.", align: "right", track: "5em" });
-  if (show.taxColumns && hasTax)
+  if (show.taxColumns && hasTax && anyTaxed)
     columns.push({
       key: "tax",
       label: kind === "inter" ? "IGST" : "GST",
@@ -352,7 +354,7 @@ export function buildViewModel(
 
   /* ---------------- Tax summary ---------------- */
   let taxSummary: TaxSummaryView | null = null;
-  if (hasTax && t.taxSummary.length > 0) {
+  if (hasTax && anyTaxed && t.taxSummary.length > 0) {
     const headers =
       kind === "intra"
         ? ["Rate", "Taxable value", "CGST", stateTax, "Total tax"]
