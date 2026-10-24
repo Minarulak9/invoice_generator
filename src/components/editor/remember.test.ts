@@ -4,7 +4,7 @@ import { saveCustomer } from "@/db/records";
 import { loadSettings, updateSettings } from "@/db/settings";
 import { createInvoice } from "@/lib/invoice-factory";
 import { DEFAULT_SETTINGS, type Invoice } from "@/lib/schema";
-import { rememberParties } from "./remember";
+import { rememberParties, rememberTexts } from "./remember";
 
 const memory = new Map<string, string>();
 vi.stubGlobal("localStorage", {
@@ -73,5 +73,23 @@ describe("rememberParties", () => {
     });
     expect(result.customerId).toBeNull();
     expect(await getDb().customers.count()).toBe(0);
+  });
+});
+
+describe("rememberTexts", () => {
+  it("makes the document's notes and terms the defaults for the next one", async () => {
+    await rememberTexts({
+      ...invoice(),
+      notes: "Thanks!",
+      terms: "50% advance",
+      footer: "Zynitex",
+    });
+    const next = createInvoice({
+      settings: await loadSettings(),
+      designs: [],
+      docType: "tax_invoice",
+      generated: { number: "INV-2", autoNumber: null },
+    });
+    expect([next.notes, next.terms, next.footer]).toEqual(["Thanks!", "50% advance", "Zynitex"]);
   });
 });

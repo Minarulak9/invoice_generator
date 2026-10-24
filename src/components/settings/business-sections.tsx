@@ -190,7 +190,7 @@ export function PaymentsSection({ draft, update }: SectionProps) {
       <Card>
         <CardHeader
           title="Preferred method"
-          description="When both bank and UPI are on a document, the preferred one is listed first and marked Preferred. Both stay valid."
+          description="When both bank and UPI are on a document, the preferred one is listed first and highlighted. Both stay valid."
         />
         <CardContent>
           <Segmented<Seller["preferredPayment"]>
@@ -293,6 +293,14 @@ export function PaymentsSection({ draft, update }: SectionProps) {
                   maxLength={120}
                 />
               </Field>
+              <ImageUpload
+                label="Your QR code"
+                aspect="square"
+                maxDimension={900}
+                value={p.paymentQr}
+                onChange={(paymentQr) => set({ paymentQr })}
+                hint="Optional. Printed as-is instead of the automatic QR, without an amount."
+              />
               <SwitchRow
                 label="Include amount in QR"
                 description="The payer's app fills in the balance due automatically."

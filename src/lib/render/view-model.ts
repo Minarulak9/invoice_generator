@@ -1,5 +1,5 @@
 import type { InvoiceTotals, TaxKind } from "@/lib/calc/engine";
-import { computeSchedule } from "@/lib/calc/schedule";
+import { activeStages, computeSchedule } from "@/lib/calc/schedule";
 import { amountInWords } from "@/lib/calc/words";
 import { DOC_TYPE_META, PAYMENT_MODE_LABELS } from "@/lib/documents";
 import { formatDate } from "@/lib/dates";
@@ -16,7 +16,7 @@ import {
 } from "@/lib/gst/tax";
 import { toDec } from "@/lib/money";
 import type { DateFormatId, DesignCustomization, Invoice } from "@/lib/schema";
-import { buildUpiUri } from "@/lib/upi";
+import { resolvePaymentQr } from "@/lib/payment-qr";
 
 export type ColumnKey = "index" | "item" | "hsn" | "qty" | "price" | "discount" | "tax" | "amount";
 
@@ -66,6 +66,12 @@ export interface PaymentView {
   bank: LabelValue[];
   upiId: string;
   upiUri: string | null;
+  /** Uploaded QR image (used instead of a generated UPI QR). */
+  qrImage: string;
+  /** Formatted amount the generated QR asks for ("" when the payer enters it). */
+  qrAmount: string;
+  /** Instalment the QR amount is for, e.g. "Advance". */
+  qrFor: string;
   instructions: string;
   /** Set only when both bank and UPI are shown: which one goes first, marked "Preferred". */
   preferred: "" | "upi" | "bank";
@@ -409,9 +415,7 @@ export function buildViewModel(
   }
 
   /* ---------------- Payment schedule ---------------- */
-  const stages = invoice.paymentSchedule.filter(
-    (s) => s.label.trim() || s.due.trim() || toDec(s.value).greaterThan(0),
-  );
+  const stages = activeStages(invoice.paymentSchedule);
   let schedule: ScheduleView | null = null;
   if (stages.length > 0) {
     const plan = computeSchedule(
@@ -455,26 +459,27 @@ export function buildViewModel(
     if (b.swift.trim() && invoice.currency !== "INR")
       bank.push({ label: "SWIFT", value: b.swift.trim().toUpperCase() });
   }
-  const amountForQr = toDec(t.balanceDue);
-  const upiUri =
-    show.upiQr &&
-    meta.hasPayment &&
-    invoice.currency === "INR" &&
-    seller.upiId.trim() &&
-    amountForQr.greaterThan(0)
-      ? buildUpiUri({
-          upiId: seller.upiId,
-          payeeName: seller.upiName || seller.name,
-          amount: opts.upiIncludeAmount ? t.balanceDue : undefined,
-          note: `${invoice.docTitle || meta.defaultTitle} ${invoice.number}`.trim(),
-        })
-      : null;
+  const qr = resolvePaymentQr(invoice, t, {
+    show: show.upiQr,
+    includeAmount: opts.upiIncludeAmount,
+  });
+  const upiUri = qr.kind === "auto" ? qr.uri : null;
+  const qrImage = qr.kind === "upload" ? qr.image : "";
   const instructions = invoice.paymentInstructions.trim();
   const upiId = show.upiQr && invoice.currency === "INR" ? seller.upiId.trim() : "";
-  const preferred = bank.length && (upiUri || upiId) ? seller.preferredPayment : "";
+  const preferred = bank.length && (upiUri || qrImage || upiId) ? seller.preferredPayment : "";
   const payment: PaymentView | null =
-    bank.length || upiUri || instructions || upiId
-      ? { bank, upiId, upiUri, instructions, preferred }
+    bank.length || upiUri || qrImage || instructions || upiId
+      ? {
+          bank,
+          upiId,
+          upiUri,
+          qrImage,
+          qrAmount: qr.kind === "auto" && qr.amount ? money(qr.amount) : "",
+          qrFor: qr.kind === "auto" ? qr.forLabel : "",
+          instructions,
+          preferred,
+        }
       : null;
 
   /* ---------------- Status ---------------- */

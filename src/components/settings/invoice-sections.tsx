@@ -108,7 +108,10 @@ export function DefaultsSection({ draft, update }: SectionProps) {
       </Card>
 
       <Card>
-        <CardHeader title="Default text" />
+        <CardHeader
+          title="Default text"
+          description="New documents start with this. It updates automatically when you change notes or terms on a document."
+        />
         <CardContent className="grid gap-4">
           <Field label="Notes">
             <Textarea

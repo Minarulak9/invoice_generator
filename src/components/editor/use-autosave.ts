@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { isNumberTaken, saveInvoice } from "@/db/invoices";
 import { useEditor } from "@/stores/editor-store";
+import { CARRY_OVER_TEXT, rememberTexts } from "./remember";
 
 const AUTOSAVE_DELAY = 600;
 
@@ -39,8 +40,24 @@ export function useAutosave() {
   useEffect(() => {
     let saveTimer: ReturnType<typeof setTimeout> | undefined;
     let numberTimer: ReturnType<typeof setTimeout> | undefined;
+    let textTimer: ReturnType<typeof setTimeout> | undefined;
+    const saveTexts = () => {
+      textTimer = undefined;
+      const latest = useEditor.getState().invoice;
+      if (latest) void rememberTexts(latest).catch(() => {});
+    };
 
     const unsubscribe = useEditor.subscribe((state, prev) => {
+      // Editing notes/terms here makes them the starting text of the next document.
+      const inv = state.invoice;
+      if (
+        inv &&
+        prev.invoice?.id === inv.id &&
+        CARRY_OVER_TEXT.some((k) => inv[k] !== prev.invoice![k])
+      ) {
+        clearTimeout(textTimer);
+        textTimer = setTimeout(saveTexts, 1000);
+      }
       if (state.revision !== prev.revision && state.revision !== state.savedRevision) {
         clearTimeout(saveTimer);
         saveTimer = setTimeout(() => void flushSave(), AUTOSAVE_DELAY);
@@ -76,6 +93,10 @@ export function useAutosave() {
       unsubscribe();
       clearTimeout(saveTimer);
       clearTimeout(numberTimer);
+      if (textTimer) {
+        clearTimeout(textTimer);
+        saveTexts();
+      }
       window.removeEventListener("beforeunload", beforeUnload);
       document.removeEventListener("visibilitychange", onHide);
       void flushSave();

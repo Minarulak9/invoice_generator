@@ -12,6 +12,26 @@ export interface Remembered {
   customerAdded: boolean;
 }
 
+/** Text blocks that carry over from the last document you edited to the next one. */
+export const CARRY_OVER_TEXT = ["notes", "terms", "paymentInstructions", "footer"] as const;
+
+/** Make this document's notes, terms, payment instructions and footer the defaults for new ones. */
+export async function rememberTexts(invoice: Invoice): Promise<void> {
+  const settings = await loadSettings();
+  const d = settings.invoiceDefaults;
+  if (CARRY_OVER_TEXT.every((k) => d[k] === invoice[k])) return;
+  await updateSettings((s) => ({
+    ...s,
+    invoiceDefaults: {
+      ...s.invoiceDefaults,
+      notes: invoice.notes,
+      terms: invoice.terms,
+      paymentInstructions: invoice.paymentInstructions,
+      footer: invoice.footer,
+    },
+  }));
+}
+
 /**
  * Remember details so nobody types them twice. Runs when a document is
  * downloaded (details are complete by then, unlike mid-typing autosaves):

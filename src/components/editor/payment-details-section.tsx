@@ -1,30 +1,31 @@
 "use client";
 
-import { Landmark, Save } from "lucide-react";
+import { Landmark, QrCode, Save } from "lucide-react";
 import { toast } from "sonner";
-import { useShallow } from "zustand/react/shallow";
 import { updateSettings } from "@/db/settings";
 import { IFSC_PATTERN, UPI_PATTERN } from "@/lib/gst/gstin";
+import { formatMoney } from "@/lib/format";
+import { resolvePaymentQr } from "@/lib/payment-qr";
 import type { Seller } from "@/lib/schema";
+import { cn } from "@/lib/utils";
 import { useEditor } from "@/stores/editor-store";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input, Textarea } from "@/components/ui/input";
 import { Segmented } from "@/components/ui/segmented";
 import { Tooltip } from "@/components/ui/tooltip";
+import { ImageUpload } from "@/components/forms/image-upload";
+import { useEditorContext, useEditorTotals } from "./editor-context";
 import { EditorSection } from "./section";
 
 type Preferred = Seller["preferredPayment"];
 
 /** Bank account, UPI and which of the two the customer should use first. */
 export function PaymentDetailsSection() {
-  const { seller, currency, instructions } = useEditor(
-    useShallow((s) => ({
-      seller: s.invoice!.seller,
-      currency: s.invoice!.currency,
-      instructions: s.invoice!.paymentInstructions,
-    })),
-  );
+  const { settings } = useEditorContext();
+  const totals = useEditorTotals();
+  const invoice = useEditor((s) => s.invoice!);
+  const { seller, currency, paymentInstructions: instructions } = invoice;
   const patch = useEditor((s) => s.patch);
   const patchSeller = useEditor((s) => s.patchSeller);
   const bank = seller.bank;
@@ -32,7 +33,12 @@ export function PaymentDetailsSection() {
     patchSeller({ bank: { ...bank, ...partial } });
 
   const hasBank = Boolean(bank.accountNumber.trim());
-  const hasUpi = Boolean(seller.upiId.trim());
+  const hasUpi = Boolean(seller.upiId.trim() || seller.paymentQr);
+  const qr = resolvePaymentQr(invoice, totals, {
+    show: invoice.design.customization.show.upiQr,
+    includeAmount: settings.upi.includeAmount,
+  });
+  const money = (v: string) => formatMoney(v, currency, settings.formats.numberGrouping);
   const ifscInvalid = bank.ifsc && !IFSC_PATTERN.test(bank.ifsc);
   const upiInvalid = seller.upiId && !UPI_PATTERN.test(seller.upiId);
 
@@ -53,11 +59,12 @@ export function PaymentDetailsSection() {
         bank: structuredClone(bank),
         upiId: seller.upiId,
         upiName: seller.upiName,
+        paymentQr: seller.paymentQr,
         preferredPayment: seller.preferredPayment,
       },
     }));
     toast.success("Payment details saved", {
-      description: "New documents will use this bank, UPI and preference.",
+      description: "New documents will use these payment details.",
     });
   };
 
@@ -152,15 +159,35 @@ export function PaymentDetailsSection() {
             />
           </Field>
         </div>
-        {currency !== "INR" && hasUpi && (
-          <p className="text-xs text-muted-foreground">UPI is shown on INR documents only.</p>
-        )}
+        <ImageUpload
+          label="Your QR code"
+          aspect="square"
+          maxDimension={900}
+          value={seller.paymentQr}
+          onChange={(paymentQr) => patchSeller({ paymentQr })}
+          hint="Optional. Upload the QR from your UPI or bank app; it's printed as-is, without an amount. Crop it to just the code for easy scanning."
+        />
+        <p
+          className={cn(
+            "flex items-start gap-1.5 text-xs",
+            qr.kind === "none" ? "text-muted-foreground" : "text-success-foreground",
+          )}
+        >
+          <QrCode className="mt-px size-3.5 shrink-0" aria-hidden />
+          {qr.kind === "upload"
+            ? "Your uploaded QR code is printed (no amount). Remove it to use an automatic UPI QR."
+            : qr.kind === "auto"
+              ? qr.amount
+                ? `UPI QR asks for ${money(qr.amount)}${qr.forLabel ? ` (${qr.forLabel})` : ""}.`
+                : "UPI QR added; the payer enters the amount."
+              : `No QR code: ${qr.reason}`}
+        </p>
 
         <Field
           label="Preferred method"
           hint={
             hasBank && hasUpi
-              ? "Both stay on the document; the preferred one is listed first and marked Preferred."
+              ? "Both stay on the document; the preferred one is listed first and highlighted."
               : "Applies once both bank and UPI are filled in."
           }
         >
@@ -187,7 +214,7 @@ export function PaymentDetailsSection() {
         </Field>
 
         <div className="flex justify-end">
-          <Tooltip content="Use this bank, UPI and preference on new documents">
+          <Tooltip content="Use this bank, UPI, QR code and preference on new documents">
             <Button size="xs" variant="ghost" onClick={() => void saveAsDefault()}>
               <Save />
               Save as default

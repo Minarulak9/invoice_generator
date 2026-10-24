@@ -126,6 +126,8 @@ export const sellerSchema = z.object({
   bank: bankSchema.prefault({}),
   upiId: text(120),
   upiName: text(120),
+  /** The seller's own payment QR (from their UPI/bank app); printed instead of a generated one. */
+  paymentQr: imageDataUrl,
   /** Payment method listed first and marked "Preferred"; both are always shown. */
   preferredPayment: z.enum(["", "upi", "bank"]).default(""),
 });

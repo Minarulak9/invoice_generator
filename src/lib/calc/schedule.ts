@@ -70,3 +70,8 @@ export function computeSchedule(
     unscheduled: grand.minus(scheduled).toFixed(precision),
   };
 }
+
+/** Instalments with anything filled in; untouched blank rows are ignored. */
+export function activeStages(stages: readonly PaymentStage[]): PaymentStage[] {
+  return stages.filter((s) => s.label.trim() || s.due.trim() || toDec(s.value).greaterThan(0));
+}
