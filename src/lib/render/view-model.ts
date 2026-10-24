@@ -72,6 +72,8 @@ export interface PaymentView {
   qrAmount: string;
   /** Instalment the QR amount is for, e.g. "Advance". */
   qrFor: string;
+  /** UPI query for the tap-to-pay link ("" = no link); the page origin is added when rendering. */
+  payParams: string;
   instructions: string;
   /** Set only when both bank and UPI are shown: which one goes first, marked "Preferred". */
   preferred: "" | "upi" | "bank";
@@ -477,6 +479,7 @@ export function buildViewModel(
           qrImage,
           qrAmount: qr.kind === "auto" && qr.amount ? money(qr.amount) : "",
           qrFor: qr.kind === "auto" ? qr.forLabel : "",
+          payParams: show.payLink && qr.kind !== "none" ? qr.params : "",
           instructions,
           preferred,
         }

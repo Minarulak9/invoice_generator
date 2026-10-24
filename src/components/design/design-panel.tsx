@@ -75,6 +75,7 @@ const VISIBILITY: { key: keyof Visibility; label: string; group: "header" | "tab
     { key: "taxSummary", label: "Tax summary table", group: "footer" },
     { key: "bankDetails", label: "Bank details", group: "footer" },
     { key: "upiQr", label: "UPI QR code", group: "footer" },
+    { key: "payLink", label: "Tap-to-pay UPI link", group: "footer" },
     { key: "notes", label: "Notes", group: "footer" },
     { key: "terms", label: "Terms & conditions", group: "footer" },
     { key: "signature", label: "Signature block", group: "footer" },

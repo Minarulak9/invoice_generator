@@ -150,7 +150,11 @@ export function PaymentDetailsSection() {
               spellCheck={false}
             />
           </Field>
-          <Field label="Payee name" optional>
+          <Field
+            label="Payee name"
+            optional
+            hint="Enter the name on your bank account; payers are asked to check it matches."
+          >
             <Input
               value={seller.upiName}
               onChange={(e) => patchSeller({ upiName: e.target.value })}

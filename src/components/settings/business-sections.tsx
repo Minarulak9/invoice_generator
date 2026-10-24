@@ -286,7 +286,11 @@ export function PaymentsSection({ draft, update }: SectionProps) {
                   spellCheck={false}
                 />
               </Field>
-              <Field label="Payee name" optional hint="Defaults to your business name.">
+              <Field
+                label="Payee name"
+                optional
+                hint="Enter the name on your bank account; payers are asked to check it matches. Defaults to your business name."
+              >
                 <Input
                   value={p.upiName}
                   onChange={(e) => set({ upiName: e.target.value })}

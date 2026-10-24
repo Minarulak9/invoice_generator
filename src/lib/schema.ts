@@ -207,6 +207,8 @@ export const visibilitySchema = z.object({
   terms: z.boolean().default(true),
   bankDetails: z.boolean().default(true),
   upiQr: z.boolean().default(true),
+  /** "Tap to pay via UPI" link under the QR — clickable in the PDF. */
+  payLink: z.boolean().default(true),
   signature: z.boolean().default(true),
   statusStamp: z.boolean().default(true),
   /** Print GST state codes for the customer and place of supply ("West Bengal (Code 19)"). */

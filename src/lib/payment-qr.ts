@@ -4,13 +4,13 @@ import { DOC_TYPE_META } from "@/lib/documents";
 import { UPI_PATTERN } from "@/lib/gst/gstin";
 import { toDec } from "@/lib/money";
 import type { Invoice } from "@/lib/schema";
-import { buildUpiUri } from "@/lib/upi";
+import { buildUpiParams } from "@/lib/upi";
 
 export type PaymentQr =
   /** The seller's own QR image, printed as-is (no amount). */
-  | { kind: "upload"; image: string }
+  | { kind: "upload"; image: string; params: string }
   /** Generated UPI QR; `amount` is empty when the amount is left to the payer. */
-  | { kind: "auto"; uri: string; amount: string; forLabel: string }
+  | { kind: "auto"; uri: string; params: string; amount: string; forLabel: string }
   | { kind: "none"; reason: string };
 
 /**
@@ -25,8 +25,15 @@ export function resolvePaymentQr(
 ): PaymentQr {
   const seller = invoice.seller;
   if (!opts.show) return { kind: "none", reason: "QR codes are turned off in Design." };
-  if (seller.paymentQr) return { kind: "upload", image: seller.paymentQr };
   const upiId = seller.upiId.trim();
+  const payeeName = seller.upiName || seller.name;
+  const note =
+    `${invoice.docTitle || DOC_TYPE_META[invoice.docType].defaultTitle} ${invoice.number}`.trim();
+  if (seller.paymentQr) {
+    // The uploaded QR has no amount, so neither does its tap-to-pay link.
+    const params = buildUpiParams({ upiId, payeeName, note }) ?? "";
+    return { kind: "upload", image: seller.paymentQr, params };
+  }
   if (!upiId) return { kind: "none", reason: "Add a UPI ID or upload your QR code." };
   if (!UPI_PATTERN.test(upiId))
     return { kind: "none", reason: "The UPI ID doesn't look right (it should be like name@bank)." };
@@ -63,12 +70,18 @@ export function resolvePaymentQr(
           : "Add items so there is an amount to pay.",
     };
 
-  const uri = buildUpiUri({
+  const params = buildUpiParams({
     upiId,
-    payeeName: seller.upiName || seller.name,
+    payeeName,
     amount: opts.includeAmount ? amount : undefined,
-    note: `${invoice.docTitle || DOC_TYPE_META[invoice.docType].defaultTitle} ${invoice.number}`.trim(),
+    note,
   });
-  if (!uri) return { kind: "none", reason: "Couldn't build a UPI link from this UPI ID." };
-  return { kind: "auto", uri, amount: opts.includeAmount ? amount : "", forLabel };
+  if (!params) return { kind: "none", reason: "Couldn't build a UPI link from this UPI ID." };
+  return {
+    kind: "auto",
+    uri: `upi://pay?${params}`,
+    params,
+    amount: opts.includeAmount ? amount : "",
+    forLabel,
+  };
 }

@@ -3,6 +3,8 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { ColumnKey, DocRow, DocViewModel } from "@/lib/render/view-model";
 import type { DesignCustomization, SectionId } from "@/lib/schema";
+import { payPageHref } from "@/lib/upi";
+import { useMounted } from "@/hooks/use-mounted";
 import { useDoc } from "./context";
 import { QrCodeSvg } from "./qr-code";
 
@@ -530,18 +532,33 @@ export function PaymentSection({ boxed = true }: { boxed?: boolean }) {
 function PaymentQr() {
   const { vm } = useDoc();
   const p = vm.payment!;
+  // The link needs this site's address, known only in the browser (documents print client-side).
+  const mounted = useMounted();
+  const href = mounted && p.payParams ? payPageHref(window.location.origin, p.payParams) : "";
+  const code = p.qrImage ? (
+    <img
+      className="doc-qr"
+      src={p.qrImage}
+      alt="Payment QR code"
+      decoding="sync"
+      style={{ objectFit: "contain" }}
+    />
+  ) : (
+    p.upiUri && <QrCodeSvg value={p.upiUri} className="doc-qr" title="UPI payment QR code" />
+  );
   return (
     <div style={{ textAlign: "center", flexShrink: 0 }}>
-      {p.qrImage ? (
-        <img
-          className="doc-qr"
-          src={p.qrImage}
-          alt="Payment QR code"
-          decoding="sync"
-          style={{ objectFit: "contain" }}
-        />
+      {href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ display: "inline-block" }}
+        >
+          {code}
+        </a>
       ) : (
-        p.upiUri && <QrCodeSvg value={p.upiUri} className="doc-qr" title="UPI payment QR code" />
+        code
       )}
       <div style={{ fontSize: "0.78em", fontWeight: 600, marginTop: "0.3em" }}>
         {p.qrImage ? "Scan to pay" : "Scan to pay via UPI"}
@@ -554,6 +571,26 @@ function PaymentQr() {
       )}
       {p.upiId && (
         <div style={{ fontSize: "0.88em", fontWeight: 500, marginTop: "0.1em" }}>{p.upiId}</div>
+      )}
+      {href && (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "inline-block",
+            marginTop: "0.35em",
+            padding: "0.25em 0.75em",
+            borderRadius: "999px",
+            background: "var(--doc-primary)",
+            color: "var(--doc-on-primary)",
+            fontSize: "0.78em",
+            fontWeight: 650,
+            textDecoration: "none",
+          }}
+        >
+          Tap to pay via UPI
+        </a>
       )}
     </div>
   );

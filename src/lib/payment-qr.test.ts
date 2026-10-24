@@ -3,6 +3,7 @@ import { computeTotals } from "@/lib/invoice-calc";
 import { resolveDefaultDesign } from "@/lib/invoice-factory";
 import { sampleInvoice } from "@/lib/sample";
 import { DEFAULT_SETTINGS, type Invoice } from "@/lib/schema";
+import { payPageHref } from "@/lib/upi";
 import { resolvePaymentQr } from "./payment-qr";
 
 const base = sampleInvoice(DEFAULT_SETTINGS, resolveDefaultDesign(DEFAULT_SETTINGS, []));
@@ -50,11 +51,25 @@ describe("resolvePaymentQr", () => {
 
   it("uses the uploaded QR instead, even for other currencies", () => {
     const { qr } = qrFor({ currency: "USD" }, { paymentQr: "data:image/png;base64,AAAA" });
-    expect(qr).toEqual({ kind: "upload", image: "data:image/png;base64,AAAA" });
+    expect(qr).toMatchObject({ kind: "upload", image: "data:image/png;base64,AAAA" });
   });
 
   it("explains why there is no QR", () => {
     expect(qrFor({ currency: "USD" }).qr.kind).toBe("none");
     expect(qrFor({}, { upiId: "not-a-upi" }).qr.kind).toBe("none");
+  });
+
+  it("builds a tap-to-pay link that carries the amount in the #fragment", () => {
+    const { qr } = qrFor({ docType: "tax_invoice" });
+    if (qr.kind !== "auto") throw new Error("expected an auto QR");
+    const href = payPageHref("https://invoice.zynitex.com", qr.params);
+    expect(href).toMatch(/^https:\/\/invoice\.zynitex\.com\/pay#pa=shop%40okhdfcbank&/);
+    expect(href).toContain(`am=${qr.amount}`);
+  });
+
+  it("gives an uploaded QR a link without an amount", () => {
+    const { qr } = qrFor({}, { paymentQr: "data:image/png;base64,AAAA" });
+    expect(qr.kind === "upload" && qr.params).toMatch(/^pa=shop%40okhdfcbank/);
+    expect(qr.kind === "upload" && qr.params).not.toContain("am=");
   });
 });
