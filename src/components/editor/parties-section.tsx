@@ -1,6 +1,8 @@
 "use client";
 
-import { Building, Check, RotateCcw, Save, UserPlus, UserRound, X } from "lucide-react";
+/* eslint-disable @next/next/no-img-element -- data URLs from local uploads */
+
+import { AlertCircle, Building, Check, GitMerge, RotateCcw, Save, UserPlus, UserRound, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
@@ -8,7 +10,7 @@ import { useCustomers } from "@/db/hooks";
 import { saveCustomer } from "@/db/records";
 import { updateSettings } from "@/db/settings";
 import { DOC_TYPE_META } from "@/lib/documents";
-import { checkGstin, normalizeGstin, stateFromGstin } from "@/lib/gst/gstin";
+import { checkGstin, normalizeGstin, stateFromGstin, PAN_PATTERN } from "@/lib/gst/gstin";
 import { stateLabel } from "@/lib/gst/states";
 import { customerStateCode, isIndia, sellerStateCode } from "@/lib/gst/tax";
 import { toInvoiceCustomer } from "@/lib/invoice-factory";
@@ -22,6 +24,7 @@ import { Field } from "@/components/ui/field";
 import { Input, Textarea } from "@/components/ui/input";
 import { Tooltip } from "@/components/ui/tooltip";
 import { StateSelect } from "@/components/forms/pickers";
+import { ImageUpload } from "@/components/forms/image-upload";
 import { useEditorContext, useFieldIssue } from "./editor-context";
 import { useEditorActions } from "./use-editor-actions";
 import { AddFieldLink, EditorSection, useRevealOn } from "./section";
@@ -37,6 +40,14 @@ export function SellerSection() {
   const gstinIssue = useFieldIssue(fieldId.sellerGstin);
   const stateIssue = useFieldIssue(fieldId.sellerState);
   const filled = Boolean(seller.name.trim());
+
+  const [logoOpen, setLogoOpen] = useState(false);
+  const [panOpen, setPanOpen] = useState(false);
+  const [signatureOpen, setSignatureOpen] = useState(false);
+
+  useRevealOn([fieldId.sellerPan], () => setPanOpen(true));
+
+  const panInvalid = Boolean(seller.pan && !PAN_PATTERN.test(seller.pan));
 
   const setGstin = (raw: string) => {
     const gstin = normalizeGstin(raw);
@@ -66,7 +77,7 @@ export function SellerSection() {
       defaultOpen={!filled}
       done={filled}
       hasIssue={Boolean(nameIssue.error || gstinIssue.warning || stateIssue.warning)}
-      fields={[fieldId.sellerName, fieldId.sellerGstin, fieldId.sellerState]}
+      fields={[fieldId.sellerName, fieldId.sellerGstin, fieldId.sellerPan, fieldId.sellerState]}
       summary={[seller.name, seller.gstin].filter(Boolean).join(" · ") || "Your business details"}
     >
       <div className="grid gap-2.5 sm:gap-3">
@@ -137,6 +148,221 @@ export function SellerSection() {
             />
           </Field>
         </div>
+
+        {/* Compact Logo, PAN, Signature actions */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+          {/* Logo pill or link */}
+          {seller.logo && !logoOpen ? (
+            <div className="inline-flex h-7 items-center gap-1.5 rounded-full border border-border bg-surface-2/80 px-2 text-xs font-medium text-foreground">
+              <img src={seller.logo} alt="" className="size-4 rounded object-contain" />
+              <span>Logo</span>
+              <button
+                type="button"
+                onClick={() => setLogoOpen(true)}
+                className="text-[11px] text-muted-foreground underline hover:text-foreground"
+              >
+                Change
+              </button>
+              <button
+                type="button"
+                onClick={() => patchSeller({ logo: "" })}
+                className="rounded p-0.5 text-muted-foreground hover:text-danger"
+                title="Remove logo"
+                aria-label="Remove logo"
+              >
+                <X className="size-3" />
+              </button>
+            </div>
+          ) : !logoOpen ? (
+            <AddFieldLink onClick={() => setLogoOpen(true)}>Logo</AddFieldLink>
+          ) : null}
+
+          {/* PAN pill or link */}
+          {seller.pan && !panOpen ? (
+            <div className="inline-flex h-7 items-center gap-1.5 rounded-full border border-border bg-surface-2/80 px-2.5 font-mono text-xs font-medium text-foreground">
+              <span className="font-sans text-[11px] text-muted-foreground">PAN:</span>
+              <span>{seller.pan}</span>
+              <button
+                type="button"
+                onClick={() => setPanOpen(true)}
+                className="font-sans text-[11px] text-muted-foreground underline hover:text-foreground"
+              >
+                Change
+              </button>
+              <button
+                type="button"
+                onClick={() => patchSeller({ pan: "" })}
+                className="rounded p-0.5 text-muted-foreground hover:text-danger"
+                title="Remove PAN"
+                aria-label="Remove PAN"
+              >
+                <X className="size-3" />
+              </button>
+            </div>
+          ) : !panOpen ? (
+            <AddFieldLink onClick={() => setPanOpen(true)}>PAN</AddFieldLink>
+          ) : null}
+
+          {/* Signature pill or link */}
+          {seller.signature && !signatureOpen ? (
+            <div className="inline-flex h-7 items-center gap-1.5 rounded-full border border-border bg-surface-2/80 px-2 text-xs font-medium text-foreground">
+              <img src={seller.signature} alt="" className="size-4 rounded bg-white/60 object-contain" />
+              <span>
+                Signature{seller.signatoryName ? ` (${seller.signatoryName})` : ""}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSignatureOpen(true)}
+                className="text-[11px] text-muted-foreground underline hover:text-foreground"
+              >
+                Change
+              </button>
+              <button
+                type="button"
+                onClick={() => patchSeller({ signature: "", signatoryName: "" })}
+                className="rounded p-0.5 text-muted-foreground hover:text-danger"
+                title="Remove signature"
+                aria-label="Remove signature"
+              >
+                <X className="size-3" />
+              </button>
+            </div>
+          ) : !signatureOpen ? (
+            <AddFieldLink onClick={() => setSignatureOpen(true)}>Signature</AddFieldLink>
+          ) : null}
+        </div>
+
+        {/* Collapsible Logo editor */}
+        <Collapse open={logoOpen}>
+          <div className="space-y-2 rounded-xl border border-border/80 bg-surface-2/40 p-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-foreground">Business logo</span>
+              <div className="flex items-center gap-2">
+                {seller.logo && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      patchSeller({ logo: "" });
+                      setLogoOpen(false);
+                    }}
+                    className="text-xs text-danger hover:underline"
+                  >
+                    Remove
+                  </button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => setLogoOpen(false)}
+                  className="h-6 px-1.5 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Done
+                </Button>
+              </div>
+            </div>
+            <ImageUpload
+              label="Logo"
+              value={seller.logo}
+              onChange={(logo) => patchSeller({ logo })}
+              hint="Square or wide · PNG, JPG, WebP or SVG"
+            />
+          </div>
+        </Collapse>
+
+        {/* Collapsible PAN editor */}
+        <Collapse open={panOpen}>
+          <div className="space-y-2 rounded-xl border border-border/80 bg-surface-2/40 p-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-foreground">PAN card</span>
+              <div className="flex items-center gap-2">
+                {seller.pan && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      patchSeller({ pan: "" });
+                      setPanOpen(false);
+                    }}
+                    className="text-xs text-danger hover:underline"
+                  >
+                    Remove
+                  </button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => setPanOpen(false)}
+                  className="h-6 px-1.5 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Done
+                </Button>
+              </div>
+            </div>
+            <Field
+              label="Permanent Account Number (PAN)"
+              optional
+              id={fieldId.sellerPan}
+              warning={panInvalid ? "PAN format looks incorrect (e.g. ABCDE1234F)." : undefined}
+              hint={seller.pan && !panInvalid ? "Looks valid ✓" : "10-character alphanumeric PAN"}
+            >
+              <Input
+                value={seller.pan}
+                onChange={(e) =>
+                  patchSeller({ pan: e.target.value.toUpperCase().replace(/\s/g, "") })
+                }
+                maxLength={10}
+                className="font-mono uppercase tracking-wide"
+                placeholder="ABCDE1234F"
+                spellCheck={false}
+              />
+            </Field>
+          </div>
+        </Collapse>
+
+        {/* Collapsible Signature editor */}
+        <Collapse open={signatureOpen}>
+          <div className="space-y-3 rounded-xl border border-border/80 bg-surface-2/40 p-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-foreground">Signature</span>
+              <div className="flex items-center gap-2">
+                {(seller.signature || seller.signatoryName) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      patchSeller({ signature: "", signatoryName: "" });
+                      setSignatureOpen(false);
+                    }}
+                    className="text-xs text-danger hover:underline"
+                  >
+                    Remove
+                  </button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => setSignatureOpen(false)}
+                  className="h-6 px-1.5 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Done
+                </Button>
+              </div>
+            </div>
+            <ImageUpload
+              label="Signature"
+              value={seller.signature}
+              onChange={(signature) => patchSeller({ signature })}
+              hint="Transparent PNG works best"
+            />
+            <Field label="Signatory name" optional hint="Printed under the signature line">
+              <Input
+                value={seller.signatoryName}
+                onChange={(e) => patchSeller({ signatoryName: e.target.value })}
+                maxLength={120}
+                placeholder="e.g. Authorized Signatory"
+              />
+            </Field>
+          </div>
+        </Collapse>
+
         <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="secondary" onClick={fromProfile}>
             <RotateCcw />
@@ -149,8 +375,8 @@ export function SellerSection() {
         </div>
         <p className="text-xs leading-5 text-muted-foreground">
           {settings.profile.name.trim()
-            ? "Logo, bank, UPI and signature come from your business profile in Settings."
-            : "These details become your business profile when you download — you won't have to type them again. Add a logo, bank or UPI details later in Settings."}
+            ? "Logo, signature, and PAN can be set or changed above for this document, and saved to your profile anytime."
+            : "These details become your business profile when you download — you won't have to type them again. Add a logo, signature or PAN anytime."}
         </p>
       </div>
     </EditorSection>
@@ -198,6 +424,9 @@ export function CustomerSection() {
   useRevealOn([fieldId.placeOfSupply], () => reveal("pos"));
   const [saving, setSaving] = useState(false);
   const linked = customers.find((c) => c.id === customer.customerId);
+  const [skippedForCustomerId, setSkippedForCustomerId] = useState<string | null>(null);
+  const isSkipped = Boolean(linked && skippedForCustomerId === customer.customerId);
+
   const india = isIndia(customer.country);
   const showPos = DOC_TYPE_META[docType].hasTax && gstMode === "split";
 
@@ -226,7 +455,30 @@ export function CustomerSection() {
       ] as const
     ).some((k) => (linked[k] ?? "") !== (customer[k] ?? ""));
 
-  const save = async () => {
+  const handleCreateNewCustomer = async () => {
+    if (!customer.name.trim()) {
+      toast.error("Add the customer's name first");
+      return;
+    }
+    setSaving(true);
+    try {
+      const { customerId: _, ...fields } = customer;
+      void _;
+      const record = await saveCustomer({
+        ...fields,
+        name: fields.name.trim(),
+      });
+      patchCustomer({ customerId: record.id });
+      setSkippedForCustomerId(null);
+      toast.success("Saved as new customer", {
+        description: `Created new customer record "${record.name}".`,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleMergeCustomer = async () => {
     if (!customer.name.trim()) {
       toast.error("Add the customer's name first");
       return;
@@ -237,10 +489,46 @@ export function CustomerSection() {
       const record = await saveCustomer({
         ...(linked ?? {}),
         ...fields,
+        name: fields.name.trim(),
         id: customerId || undefined,
       });
       patchCustomer({ customerId: record.id });
-      toast.success(linked ? "Customer updated" : "Saved to your customers");
+      setSkippedForCustomerId(null);
+      toast.success("Customer record updated", {
+        description: `Updated saved details for "${record.name}".`,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSkipChange = () => {
+    setSkippedForCustomerId(customer.customerId);
+    toast.success("Kept changes for this invoice only (saved customer not updated)");
+  };
+
+  const handleRevertCustomer = () => {
+    if (linked) {
+      patchCustomer(toInvoiceCustomer(linked));
+      toast.success("Reverted to saved customer details");
+    }
+  };
+
+  const handleSaveUnlinkedCustomer = async () => {
+    if (!customer.name.trim()) {
+      toast.error("Add the customer's name first");
+      return;
+    }
+    setSaving(true);
+    try {
+      const { customerId: _, ...fields } = customer;
+      void _;
+      const record = await saveCustomer({
+        ...fields,
+        name: fields.name.trim(),
+      });
+      patchCustomer({ customerId: record.id });
+      toast.success("Saved to your customers");
     } finally {
       setSaving(false);
     }
@@ -271,6 +559,7 @@ export function CustomerSection() {
             onSelect={(c) => {
               patchCustomer(toInvoiceCustomer(c));
               patch({ placeOfSupply: "" });
+              setSkippedForCustomerId(null);
             }}
             align="end"
             searchPlaceholder="Search customers…"
@@ -290,7 +579,7 @@ export function CustomerSection() {
           <div className="flex items-center justify-between gap-2 rounded-lg bg-primary-soft/60 px-3 py-1.5 text-[13px] text-primary-soft-foreground">
             <span className="flex items-center gap-2">
               <Check className="size-4" />
-              Saved customer
+              Saved customer: <strong className="font-semibold">{linked.name}</strong>
             </span>
             <Button
               variant="ghost"
@@ -299,6 +588,7 @@ export function CustomerSection() {
                 patchCustomer({ ...EMPTY_CUSTOMER });
                 patch({ placeOfSupply: "" });
                 setShow(HIDDEN_GROUPS);
+                setSkippedForCustomerId(null);
               }}
             >
               <X />
@@ -306,6 +596,58 @@ export function CustomerSection() {
             </Button>
           </div>
         )}
+
+        {linked && changedFromSaved && !isSkipped && (
+          <div className="space-y-2 rounded-xl border border-warning/40 bg-warning-soft/30 p-3 text-[13px] text-foreground">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 font-medium text-warning-foreground">
+                <AlertCircle className="size-4 shrink-0 text-warning" />
+                <span>Customer details modified</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="xs"
+                className="h-6 px-1.5 text-xs text-muted-foreground hover:text-foreground"
+                onClick={handleRevertCustomer}
+                title="Discard edits and revert to saved customer details"
+              >
+                <RotateCcw className="mr-1 size-3" />
+                Revert
+              </Button>
+            </div>
+            <p className="text-xs leading-normal text-muted-foreground">
+              These details differ from the saved profile for <strong>{linked.name}</strong>. Choose what to do with these changes:
+            </p>
+            <div className="flex flex-wrap items-center gap-2 pt-0.5">
+              <Button
+                size="xs"
+                variant="secondary"
+                onClick={() => void handleCreateNewCustomer()}
+                loading={saving}
+              >
+                <UserPlus className="mr-1 size-3.5" />
+                Create new customer
+              </Button>
+              <Button
+                size="xs"
+                variant="secondary"
+                onClick={() => void handleMergeCustomer()}
+                loading={saving}
+              >
+                <GitMerge className="mr-1 size-3.5" />
+                Merge with {linked.name}
+              </Button>
+              <Button
+                size="xs"
+                variant="ghost"
+                onClick={handleSkipChange}
+              >
+                Skip change (this invoice only)
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
           <Field label="Customer name" required id={fieldId.customerName} error={nameIssue.error}>
             <Input
@@ -445,7 +787,7 @@ export function CustomerSection() {
         </Collapse>
 
         {/* Optional fields and the save action share one row to keep the card short. */}
-        {(!companyOpen || !contactOpen || !shipOpen || !linked || changedFromSaved) && (
+        {(!companyOpen || !contactOpen || !shipOpen || !linked || (changedFromSaved && isSkipped)) && (
           <div className="flex flex-wrap items-center gap-1.5">
             {!companyOpen && <AddFieldLink onClick={() => reveal("company")}>Company</AddFieldLink>}
             {!contactOpen && (
@@ -454,20 +796,30 @@ export function CustomerSection() {
             {!shipOpen && (
               <AddFieldLink onClick={() => reveal("ship")}>Shipping address</AddFieldLink>
             )}
-            {(!linked || changedFromSaved) && (
-              <Tooltip
-                content={linked ? undefined : "New customers are also saved when you download"}
-              >
+            {linked && changedFromSaved && isSkipped && (
+              <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+                <span>Invoice-only changes</span>
+                <button
+                  type="button"
+                  onClick={() => setSkippedForCustomerId(null)}
+                  className="underline hover:text-foreground"
+                >
+                  Options
+                </button>
+              </div>
+            )}
+            {!linked && (
+              <Tooltip content="New customers are also saved when you download">
                 <Button
                   size="xs"
                   variant="ghost"
                   className="ml-auto"
-                  onClick={() => void save()}
+                  onClick={() => void handleSaveUnlinkedCustomer()}
                   loading={saving}
                   disabled={!customer.name.trim()}
                 >
                   <Save />
-                  {linked ? "Update saved customer" : "Save customer"}
+                  Save customer
                 </Button>
               </Tooltip>
             )}

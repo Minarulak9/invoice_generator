@@ -40,6 +40,7 @@ export const fieldId = {
   dueDate: "field-due-date",
   sellerName: "field-seller-name",
   sellerGstin: "field-seller-gstin",
+  sellerPan: "field-seller-pan",
   sellerState: "field-seller-state",
   customerName: "field-customer-name",
   customerGstin: "field-customer-gstin",
