@@ -6,6 +6,7 @@ import {
   DatabaseBackup,
   Hash,
   Landmark,
+  Lock,
   Percent,
   ReceiptText,
   SlidersHorizontal,
@@ -21,6 +22,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { BusinessSection, PaymentsSection } from "./business-sections";
 import { DataSection } from "./data-section";
 import { DefaultsSection, FormatsSection, GstSection, NumberingSection } from "./invoice-sections";
+import { SecuritySection } from "./security-section";
 import { useSettingsDraft, type DraftStatus } from "./use-settings-draft";
 
 const SECTIONS = [
@@ -49,6 +51,12 @@ const SECTIONS = [
     label: "Formats & theme",
     icon: SlidersHorizontal,
     description: "Dates, numbers, appearance",
+  },
+  {
+    id: "security",
+    label: "Security & PIN",
+    icon: Lock,
+    description: "6-digit screen lock & privacy",
   },
   {
     id: "data",
@@ -140,6 +148,8 @@ export function SettingsView() {
                 <NumberingSection draft={draft} update={update} />
               ) : active === "formats" ? (
                 <FormatsSection draft={draft} update={update} />
+              ) : active === "security" ? (
+                <SecuritySection settings={draft} update={update} />
               ) : (
                 <DataSection />
               )}

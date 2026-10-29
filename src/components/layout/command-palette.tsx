@@ -8,6 +8,7 @@ import {
   HardDriveDownload,
   HardDriveUpload,
   Keyboard,
+  Lock,
   Monitor,
   MonitorDown,
   Moon,
@@ -19,10 +20,11 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, type ReactNode } from "react";
 import { create } from "zustand";
-import { useInvoices } from "@/db/hooks";
+import { useInvoices, useSettings } from "@/db/hooks";
 import { DOC_TYPE_META } from "@/lib/documents";
 import { DOC_TYPES } from "@/lib/schema";
 import { useInstall } from "@/stores/install";
+import { useLockStore } from "@/stores/lock-store";
 import { backupNow, openInvoiceFile, startRestore } from "@/components/storage/file-actions";
 import { Kbd } from "@/components/ui/misc";
 import { NAV_ITEMS } from "./nav";
@@ -52,6 +54,7 @@ export function useGlobalShortcuts() {
   const router = useRouter();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (useLockStore.getState().isLocked) return;
       const mod = e.metaKey || e.ctrlKey;
       if (mod && e.key.toLowerCase() === "k") {
         e.preventDefault();
@@ -80,6 +83,8 @@ export function CommandPalette() {
   const install = useInstall((s) => s.install);
   const installed = useInstall((s) => s.installed);
   const invoices = useInvoices();
+  const settings = useSettings();
+  const lock = useLockStore((s) => s.lock);
   useGlobalShortcuts();
 
   const run = (fn: () => void) => {
@@ -218,6 +223,18 @@ export function CommandPalette() {
                   System theme
                 </Item>
               </Group>
+
+              {settings?.security?.pinEnabled && (
+                <Group heading="Security">
+                  <Item
+                    icon={<Lock />}
+                    onSelect={() => run(() => lock())}
+                    keywords={["lock", "pin", "screen", "security", "protect"]}
+                  >
+                    Lock panel now
+                  </Item>
+                </Group>
+              )}
             </Command.List>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-border bg-surface-2/60 px-4 py-2.5 text-[11px] text-muted-foreground">
               <span className="flex items-center gap-1.5">

@@ -388,6 +388,14 @@ export const DATE_FORMAT_IDS = [
 ] as const;
 export type DateFormatId = (typeof DATE_FORMAT_IDS)[number];
 
+export const securitySettingsSchema = z.object({
+  pinEnabled: z.boolean().default(false),
+  pinHash: z.string().default(""),
+  pinSalt: z.string().default(""),
+  autoLockMinutes: z.number().int().min(0).max(120).default(15),
+});
+export type SecuritySettings = z.infer<typeof securitySettingsSchema>;
+
 export const settingsSchema = z.object({
   id: z.literal("app").default("app"),
   profile: sellerSchema.prefault({}),
@@ -464,6 +472,7 @@ export const settingsSchema = z.object({
       lastBackupAt: isoDateTime,
     })
     .prefault({}),
+  security: securitySettingsSchema.prefault({}),
   onboarding: z
     .object({
       welcomeSeen: z.boolean().default(false),

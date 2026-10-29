@@ -4,9 +4,12 @@ import { motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
-import { Plus, ShieldAlert, ShieldCheck } from "lucide-react";
+import { Lock, Plus, ShieldAlert, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSettings } from "@/db/hooks";
+import { useLockStore } from "@/stores/lock-store";
 import { useStorageStatus } from "@/stores/storage-status";
+import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Tooltip } from "@/components/ui/tooltip";
 import { Brand, BrandMark } from "./brand";
@@ -43,6 +46,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 /* ---------------- Desktop sidebar ---------------- */
 
 function Sidebar({ pathname, compact }: { pathname: string; compact: boolean }) {
+  const settings = useSettings();
+  const lock = useLockStore((s) => s.lock);
   return (
     <aside
       className={cn(
@@ -78,6 +83,29 @@ function Sidebar({ pathname, compact }: { pathname: string; compact: boolean }) 
         )}
       >
         <StorageStatusPill compact={compact} />
+        {settings?.security?.pinEnabled &&
+          (compact ? (
+            <Tooltip content="Lock panel">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Lock panel"
+                onClick={() => lock()}
+              >
+                <Lock className="size-4" />
+              </Button>
+            </Tooltip>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start gap-2 text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => lock()}
+            >
+              <Lock className="size-4" />
+              <span>Lock panel</span>
+            </Button>
+          ))}
         {compact ? <ThemeIconButton /> : <ThemeSegmented />}
       </div>
     </aside>
@@ -182,6 +210,8 @@ function MobileMenu({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const settings = useSettings();
+  const lock = useLockStore((s) => s.lock);
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" title="Menu" hideHeader>
@@ -200,6 +230,20 @@ function MobileMenu({
           </nav>
           <div className="space-y-3 border-t border-border p-3">
             <StorageStatusPill />
+            {settings?.security?.pinEnabled && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start gap-2 text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  onOpenChange(false);
+                  lock();
+                }}
+              >
+                <Lock className="size-4" />
+                <span>Lock panel</span>
+              </Button>
+            )}
             <ThemeSegmented />
           </div>
         </div>

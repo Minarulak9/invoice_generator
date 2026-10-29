@@ -22,9 +22,25 @@ export function useSettingsDraft() {
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
-    if (settings && !latest.current) {
+    if (!settings) return;
+    if (!latest.current) {
       latest.current = settings;
       setDraft(settings);
+      return;
+    }
+    // Synchronize non-dirty keys whenever database settings change
+    const dirtyKeys = dirty.current;
+    let changed = false;
+    const merged = { ...latest.current };
+    for (const key of Object.keys(settings) as Key[]) {
+      if (!dirtyKeys.has(key) && merged[key] !== settings[key]) {
+        (merged as Record<Key, unknown>)[key] = settings[key];
+        changed = true;
+      }
+    }
+    if (changed) {
+      latest.current = merged;
+      setDraft(merged);
     }
   }, [settings]);
 

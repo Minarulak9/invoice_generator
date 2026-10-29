@@ -5,11 +5,14 @@ import {
   FolderOpen,
   HardDriveDownload,
   HardDriveUpload,
+  Lock,
   Menu,
   Plus,
   Search,
 } from "lucide-react";
 import Link from "next/link";
+import { useSettings } from "@/db/hooks";
+import { useLockStore } from "@/stores/lock-store";
 import { useMounted } from "@/hooks/use-mounted";
 import { DOC_TYPE_META } from "@/lib/documents";
 import { DOC_TYPES } from "@/lib/schema";
@@ -37,6 +40,8 @@ import { ThemeIconButton } from "./theme-toggle";
 export function QuickBar({ onOpenMenu }: { onOpenMenu: () => void }) {
   const openPalette = () => usePalette.getState().setOpen(true);
   const mounted = useMounted();
+  const settings = useSettings();
+  const lock = useLockStore((s) => s.lock);
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70">
@@ -113,6 +118,19 @@ export function QuickBar({ onOpenMenu }: { onOpenMenu: () => void }) {
           <InstallAppButton label={false} className="sm:hidden" />
           <InstallAppButton className="hidden sm:inline-flex" />
           <ThemeIconButton />
+
+          {settings?.security?.pinEnabled && (
+            <Tooltip content="Lock panel">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Lock panel"
+                onClick={() => lock()}
+              >
+                <Lock className="size-4" />
+              </Button>
+            </Tooltip>
+          )}
 
           <NewDocumentMenu />
 
